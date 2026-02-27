@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Eye, Pencil, Trash2, BookOpen, Loader2 } from "lucide-react";
+import { Plus, Eye, Pencil, Trash2, BookOpen, Loader2, UserPlus } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import AssignCourseModal from "@/components/AssignCourseModal";
 
 interface CourseRow {
   id: string;
@@ -36,6 +37,7 @@ const CoursesListPage = () => {
   const [courses, setCourses] = useState<CourseRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [assignCourse, setAssignCourse] = useState<{ id: string; title: string } | null>(null);
 
   useEffect(() => {
     fetchCourses();
@@ -162,6 +164,17 @@ const CoursesListPage = () => {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
+                      {course.status === "published" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setAssignCourse({ id: course.id, title: course.title })}
+                          title="Assign to employees"
+                        >
+                          <UserPlus className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"
@@ -205,6 +218,15 @@ const CoursesListPage = () => {
           </Table>
         </CardContent>
       </Card>
+
+      {assignCourse && (
+        <AssignCourseModal
+          open={!!assignCourse}
+          onOpenChange={(open) => !open && setAssignCourse(null)}
+          courseId={assignCourse.id}
+          courseTitle={assignCourse.title}
+        />
+      )}
     </div>
   );
 };
