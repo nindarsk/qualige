@@ -35,7 +35,31 @@ function cleanTranscript(xml: string): string {
   return text;
 }
 
-async function fetchYouTubeTranscript(videoId: string): Promise<string> {
+function extractVideoMetadata(html: string): { title: string; description: string } {
+  let title = "";
+  let description = "";
+
+  // Extract title
+  const titleMatch = html.match(/"title"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+  if (titleMatch) title = titleMatch[1].replace(/\\"/g, '"').replace(/\\n/g, "\n");
+  if (!title) {
+    const ogTitle = html.match(/<meta[^>]*property="og:title"[^>]*content="([^"]*)"/) 
+      || html.match(/<title>([^<]*)<\/title>/);
+    if (ogTitle) title = ogTitle[1];
+  }
+
+  // Extract description
+  const descMatch = html.match(/"shortDescription"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+  if (descMatch) description = descMatch[1].replace(/\\"/g, '"').replace(/\\n/g, "\n");
+  if (!description) {
+    const ogDesc = html.match(/<meta[^>]*property="og:description"[^>]*content="([^"]*)"/);
+    if (ogDesc) description = ogDesc[1];
+  }
+
+  return { title, description };
+}
+
+async function fetchYouTubeTranscript(videoId: string): Promise<{ text: string; source: "transcript" | "metadata" }> {
   // Try direct timedtext endpoints first
   const endpoints = [
     `https://www.youtube.com/api/timedtext?lang=en&v=${videoId}`,
@@ -46,18 +70,18 @@ async function fetchYouTubeTranscript(videoId: string): Promise<string> {
   for (const url of endpoints) {
     try {
       const resp = await fetch(url);
-      if (!resp.ok) { console.log(`Timedtext ${url} returned ${resp.status}`); continue; }
+      if (!resp.ok) continue;
       const xml = await resp.text();
-      if (!xml || xml.trim().length < 50) { console.log(`Timedtext ${url} returned short/empty response`); continue; }
+      if (!xml || xml.trim().length < 50) continue;
       const cleaned = cleanTranscript(xml);
-      if (cleaned.length > 50) return cleaned;
-    } catch (e) {
-      console.log(`Timedtext fetch error for ${url}:`, e);
+      if (cleaned.length > 50) return { text: cleaned, source: "transcript" };
+    } catch {
       continue;
     }
   }
 
-  // Fallback: fetch the watch page and extract captionTracks baseUrl
+  // Fallback: fetch the watch page
+  let lastHtml = "";
   const pageUrls = [
     `https://www.youtube.com/watch?v=${videoId}`,
     `https://m.youtube.com/watch?v=${videoId}`,
@@ -73,54 +97,32 @@ async function fetchYouTubeTranscript(videoId: string): Promise<string> {
           "Accept": "text/html,application/xhtml+xml",
         },
       });
-      if (!pageResp.ok) { console.log(`Page fetch returned ${pageResp.status}`); continue; }
+      if (!pageResp.ok) continue;
       const html = await pageResp.text();
+      lastHtml = html;
       console.log(`Page HTML length: ${html.length}`);
-      
-      // Check if video has captions at all
-      const hasCaptions = html.includes("captionTracks") || html.includes("playerCaptionsTracklistRenderer");
+
+      const hasCaptions = html.includes("captionTracks");
       console.log(`Video has captions data: ${hasCaptions}`);
 
-      // Try multiple patterns to find caption URLs
-      const patterns = [
-        /"captionTracks":\s*\[(.*?)\]/s,
-        /\"captionTracks\":\[(\{.*?\}(?:,\{.*?\})*)\]/s,
-      ];
-
-      for (const pattern of patterns) {
-        const match = html.match(pattern);
-        if (!match) continue;
-
-        // Extract all baseUrl values
-        const baseUrlMatches = match[0].matchAll(/"baseUrl"\s*:\s*"(.*?)"/g);
-        for (const urlMatch of baseUrlMatches) {
-          try {
-            const captionUrl = urlMatch[1]
-              .replace(/\\u0026/g, "&")
-              .replace(/\\"/g, '"');
-            console.log(`Found caption URL, fetching transcript...`);
-            const captionResp = await fetch(captionUrl);
-            if (!captionResp.ok) { await captionResp.text(); continue; }
-            const xml = await captionResp.text();
-            const cleaned = cleanTranscript(xml);
-            if (cleaned.length > 50) return cleaned;
-          } catch (e) {
-            console.log("Caption URL fetch error:", e);
-            continue;
+      if (hasCaptions) {
+        // Try to extract caption URLs
+        const captionMatch = html.match(/"captionTracks":\s*\[.*?\]/s);
+        if (captionMatch) {
+          const baseUrlMatches = captionMatch[0].matchAll(/"baseUrl"\s*:\s*"(.*?)"/g);
+          for (const urlMatch of baseUrlMatches) {
+            try {
+              const captionUrl = urlMatch[1].replace(/\\u0026/g, "&").replace(/\\"/g, '"');
+              console.log(`Found caption URL, fetching transcript...`);
+              const captionResp = await fetch(captionUrl);
+              if (!captionResp.ok) { await captionResp.text(); continue; }
+              const xml = await captionResp.text();
+              const cleaned = cleanTranscript(xml);
+              if (cleaned.length > 50) return { text: cleaned, source: "transcript" };
+            } catch {
+              continue;
+            }
           }
-        }
-      }
-
-      // Alternative: look for timedtext in playerCaptionsTracklistRenderer
-      const timedtextMatch = html.match(/https?:\\\/\\\/www\.youtube\.com\\\/api\\\/timedtext[^"']*/);
-      if (timedtextMatch) {
-        const ttUrl = timedtextMatch[0].replace(/\\\//g, "/").replace(/\\u0026/g, "&");
-        console.log(`Found timedtext URL from page, fetching...`);
-        const ttResp = await fetch(ttUrl);
-        if (ttResp.ok) {
-          const xml = await ttResp.text();
-          const cleaned = cleanTranscript(xml);
-          if (cleaned.length > 50) return cleaned;
         }
       }
     } catch (e) {
@@ -129,8 +131,19 @@ async function fetchYouTubeTranscript(videoId: string): Promise<string> {
     }
   }
 
+  // Final fallback: use video title + description as context for AI
+  const html = lastHtml;
+  if (html) {
+    const meta = extractVideoMetadata(html);
+    console.log(`Fallback to metadata — title: "${meta.title}", desc length: ${meta.description.length}`);
+    if (meta.title) {
+      const fallbackText = `Video Title: ${meta.title}\n\nVideo Description: ${meta.description || "No description available."}`;
+      return { text: fallbackText, source: "metadata" };
+    }
+  }
+
   console.log("All transcript extraction methods failed for video:", videoId);
-  return "";
+  return { text: "", source: "transcript" };
 }
 
 async function extractText(fileData: Blob, fileName: string): Promise<string> {
@@ -228,20 +241,22 @@ serve(async (req) => {
       }
 
       console.log("Extracting transcript for video:", videoId);
-      textContent = await fetchYouTubeTranscript(videoId);
+      const result = await fetchYouTubeTranscript(videoId);
 
-      if (!textContent || textContent.length < 100) {
+      if (!result.text || result.text.length < 20) {
         return new Response(
           JSON.stringify({ error: "Could not extract transcript from this YouTube video. The video may not have captions enabled. Please try a different video or upload a document instead." }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      console.log("YouTube transcript (first 500 chars):", textContent.substring(0, 500));
+      textContent = result.text;
+      console.log(`YouTube content source: ${result.source}`);
+      console.log("YouTube content (first 500 chars):", textContent.substring(0, 500));
 
       const words = textContent.split(/\s+/);
       if (words.length > 12000) {
-        console.warn(`Transcript has ${words.length} words, truncating to 12000.`);
+        console.warn(`Content has ${words.length} words, truncating to 12000.`);
         textContent = words.slice(0, 12000).join(" ");
       }
     } else {
