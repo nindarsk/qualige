@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.invite-employee]
 verify_jwt = false
+
+[functions.generate-certificate]
+verify_jwt = false

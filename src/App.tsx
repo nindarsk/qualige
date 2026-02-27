@@ -20,6 +20,12 @@ import UploadCoursePage from "./pages/dashboards/hr/UploadCoursePage";
 import CoursesListPage from "./pages/dashboards/hr/CoursesListPage";
 import CourseReviewPage from "./pages/dashboards/hr/CourseReviewPage";
 import EmployeesPage from "./pages/dashboards/hr/EmployeesPage";
+import HRDashboardIndex from "./pages/dashboards/hr/HRDashboardIndex";
+import EmployeeCoursesPage from "./pages/dashboards/employee/EmployeeCoursesPage";
+import EmployeeCertificatesPage from "./pages/dashboards/employee/EmployeeCertificatesPage";
+import CourseLearnPage from "./pages/dashboards/employee/CourseLearnPage";
+import QuizPage from "./pages/dashboards/employee/QuizPage";
+import QuizResultsPage from "./pages/dashboards/employee/QuizResultsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,7 +55,7 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
-              <Route index element={<DashboardPlaceholder title="Dashboard" description="Welcome to your HR Admin dashboard. Course management and analytics coming soon." />} />
+              <Route index element={<HRDashboardIndex />} />
               <Route path="upload" element={<UploadCoursePage />} />
               <Route path="courses" element={<CoursesListPage />} />
               <Route path="courses/:id/review" element={<CourseReviewPage />} />
@@ -67,8 +73,11 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
-              <Route index element={<DashboardPlaceholder title="My Courses" description="Your assigned training courses will appear here." />} />
-              <Route path="certificates" element={<DashboardPlaceholder title="My Certificates" description="Your earned certificates will appear here." />} />
+              <Route index element={<EmployeeCoursesPage />} />
+              <Route path="certificates" element={<EmployeeCertificatesPage />} />
+              <Route path="learn/:courseId" element={<CourseLearnPage />} />
+              <Route path="learn/:courseId/quiz" element={<QuizPage />} />
+              <Route path="learn/:courseId/results" element={<QuizResultsPage />} />
               <Route path="profile" element={<DashboardPlaceholder title="Profile" description="Manage your profile and preferences." />} />
             </Route>
 
