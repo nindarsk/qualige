@@ -11,15 +11,18 @@ const corsHeaders = {
 };
 
 function extractVideoId(url: string): string | null {
-  // Handle youtube.com/watch?v=ID
-  const watchMatch = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
-  if (watchMatch) return watchMatch[1];
-  // Handle youtu.be/ID
-  const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
-  if (shortMatch) return shortMatch[1];
-  // Handle youtube.com/embed/ID
-  const embedMatch = url.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/);
-  if (embedMatch) return embedMatch[1];
+  const patterns = [
+    /[?&]v=([a-zA-Z0-9_-]{11})/,
+    /youtu\.be\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/v\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/live\/([a-zA-Z0-9_-]{11})/,
+  ];
+  for (const re of patterns) {
+    const m = url.match(re);
+    if (m) return m[1];
+  }
   return null;
 }
 
