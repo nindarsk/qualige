@@ -1,11 +1,43 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import pdf from "npm:pdf-parse@1.1.1";
+import mammoth from "npm:mammoth@1.8.0";
+import officeparser from "npm:officeparser@4.1.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+async function extractText(fileData: Blob, fileName: string): Promise<string> {
+  const ext = fileName.split(".").pop()?.toLowerCase();
+  const arrayBuffer = await fileData.arrayBuffer();
+
+  if (ext === "txt") {
+    return new TextDecoder("utf-8").decode(arrayBuffer);
+  }
+
+  if (ext === "pdf") {
+    const buffer = new Uint8Array(arrayBuffer);
+    const result = await pdf(buffer);
+    return result.text;
+  }
+
+  if (ext === "docx") {
+    const result = await mammoth.extractRawText({ arrayBuffer });
+    return result.value;
+  }
+
+  if (ext === "pptx") {
+    const buffer = new Uint8Array(arrayBuffer);
+    const text = await officeparser.parseOfficeAsync(buffer);
+    return text;
+  }
+
+  // Fallback
+  return new TextDecoder("utf-8", { fatal: false }).decode(arrayBuffer);
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -21,55 +53,48 @@ serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY")!;
 
-    // Auth client to verify user
     const supabaseAuth = createClient(supabaseUrl, supabaseKey, {
       global: { headers: { Authorization: authHeader } },
     });
     const { data: { user }, error: userError } = await supabaseAuth.auth.getUser();
     if (userError || !user) throw new Error("Unauthorized");
 
-    // Service role client for DB operations
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
-
     const { filePath, youtubeUrl, category, language } = await req.json();
 
     let textContent = "";
 
     if (filePath) {
-      // Download file from storage
       const { data: fileData, error: downloadError } = await supabaseAdmin.storage
         .from("course-materials")
         .download(filePath);
       if (downloadError) throw new Error(`File download failed: ${downloadError.message}`);
 
-      const fileName = filePath.toLowerCase();
-      if (fileName.endsWith(".txt")) {
-        textContent = await fileData.text();
-      } else if (fileName.endsWith(".pdf") || fileName.endsWith(".docx") || fileName.endsWith(".pptx")) {
-        // For binary files, extract text as best we can
-        // PDF: try to extract text content
-        const bytes = new Uint8Array(await fileData.arrayBuffer());
-        // Simple text extraction - decode as UTF-8 and filter readable content
-        const rawText = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
-        // Extract readable strings (min 4 chars)
-        const readableChunks: string[] = [];
-        let current = "";
-        for (const char of rawText) {
-          if (char.charCodeAt(0) >= 32 && char.charCodeAt(0) < 127) {
-            current += char;
-          } else {
-            if (current.length >= 4) readableChunks.push(current);
-            current = "";
-          }
-        }
-        if (current.length >= 4) readableChunks.push(current);
-        textContent = readableChunks.join(" ").slice(0, 50000);
-        
-        if (textContent.length < 100) {
-          textContent = `[Document uploaded: ${filePath}]. The document appears to be a binary format. Please generate a comprehensive training course about ${category || "professional development"} based on typical content for this topic in the banking/financial services industry.`;
-        }
-      } else {
-        textContent = await fileData.text();
+      try {
+        textContent = await extractText(fileData, filePath);
+      } catch (extractErr) {
+        console.error("Text extraction error:", extractErr);
+        return new Response(
+          JSON.stringify({ error: "Could not read document content. Please ensure the file is not password protected and try again." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const cleaned = textContent.replace(/\s+/g, " ").trim();
+      if (!cleaned || cleaned.length < 100) {
+        return new Response(
+          JSON.stringify({ error: "Could not read document content. Please ensure the file is not password protected and try again." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      console.log("Extracted text (first 500 chars):", cleaned.substring(0, 500));
+
+      // Truncate to ~12000 words if needed
+      const words = textContent.split(/\s+/);
+      if (words.length > 12000) {
+        console.warn(`Text has ${words.length} words, truncating to 12000.`);
+        textContent = words.slice(0, 12000).join(" ");
       }
     } else if (youtubeUrl) {
       textContent = `Please generate a comprehensive training course based on the content that would typically be covered in a video at this URL: ${youtubeUrl}. Focus on ${category || "professional development"} topics relevant to banking professionals.`;
@@ -85,8 +110,7 @@ serve(async (req) => {
       .single();
     if (!orgData?.organization_id) throw new Error("User has no organization");
 
-    // Call AI to generate course
-    const systemPrompt = `You are an expert instructional designer specializing in financial services training for banking professionals. Your task is to analyze the provided document and create a structured professional training course. Always maintain a formal, professional tone appropriate for banking employees.
+    const systemPrompt = `You are an expert instructional designer. Your ONLY job is to create a training course based EXCLUSIVELY on the document content provided below. Do NOT use any external knowledge. Do NOT add information that is not present in the document. Every module, every quiz question, and every learning objective must be directly derived from the provided text. If the document is about office safety, the course must be about office safety. If the document is about AML compliance, the course must be about AML compliance. Stay strictly within the boundaries of the provided content.
 
 You must respond with valid JSON matching this exact structure:
 {
@@ -118,6 +142,8 @@ Generate minimum 5 quiz questions and maximum 15 based on content complexity.
 The course language should be: ${language || "English"}.
 The course category is: ${category || "General"}.`;
 
+    const userMessage = `Here is the complete document content to base the course on:\n\n${textContent}\n\nCreate a training course based EXCLUSIVELY on this content. Do not deviate from the topics covered in this document.`;
+
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -128,7 +154,7 @@ The course category is: ${category || "General"}.`;
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Here is the training material to analyze:\n\n${textContent.slice(0, 30000)}` },
+          { role: "user", content: userMessage },
         ],
         temperature: 0.7,
       }),
@@ -154,7 +180,6 @@ The course category is: ${category || "General"}.`;
     const content = aiData.choices?.[0]?.message?.content;
     if (!content) throw new Error("No content from AI");
 
-    // Parse JSON from response (handle markdown code blocks)
     let courseData;
     try {
       const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -163,7 +188,6 @@ The course category is: ${category || "General"}.`;
       throw new Error("Failed to parse AI response as JSON");
     }
 
-    // Insert course
     const { data: course, error: courseError } = await supabaseAdmin
       .from("courses")
       .insert({
@@ -184,7 +208,6 @@ The course category is: ${category || "General"}.`;
 
     if (courseError) throw new Error(`Failed to save course: ${courseError.message}`);
 
-    // Insert modules
     if (courseData.modules?.length) {
       const modules = courseData.modules.map((m: any) => ({
         course_id: course.id,
@@ -197,7 +220,6 @@ The course category is: ${category || "General"}.`;
       if (modError) console.error("Module insert error:", modError);
     }
 
-    // Insert quiz questions
     if (courseData.quiz?.length) {
       const questions = courseData.quiz.map((q: any) => ({
         course_id: course.id,
