@@ -72,7 +72,7 @@ const RegisterPage = () => {
   const onSubmit = async (data: RegisterForm) => {
     setLoading(true);
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const { error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
@@ -86,40 +86,12 @@ const RegisterPage = () => {
 
       if (authError) throw authError;
 
-      if (authData.user) {
-        const { data: orgData, error: orgError } = await supabase
-          .from("organizations")
-          .insert({ name: data.companyName })
-          .select()
-          .single();
-
-        if (orgError) throw orgError;
-
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .insert({
-            user_id: authData.user.id,
-            organization_id: orgData.id,
-            full_name: data.fullName,
-          });
-
-        if (profileError) throw profileError;
-
-        const { error: roleError } = await supabase
-          .from("user_roles")
-          .insert({
-            user_id: authData.user.id,
-            role: "hr_admin",
-          });
-
-        if (roleError) throw roleError;
-
-        toast({
-          title: "Registration successful!",
-          description: "Please check your email to verify your account.",
-        });
-        navigate("/verify-email");
-      }
+      // Organization, profile, and role are created automatically via database trigger
+      toast({
+        title: "Registration successful!",
+        description: "Please check your email to verify your account.",
+      });
+      navigate("/verify-email");
     } catch (error: any) {
       toast({
         title: "Registration failed",
