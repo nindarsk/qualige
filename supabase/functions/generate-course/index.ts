@@ -343,9 +343,20 @@ The course category is: ${category || "General"}.`;
 
     let courseData;
     try {
-      const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
-      courseData = JSON.parse(jsonMatch ? jsonMatch[1].trim() : content.trim());
-    } catch {
+      let cleaned = content.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+      const jsonStart = cleaned.search(/[\{\[]/);
+      const jsonEnd = cleaned.lastIndexOf(jsonStart !== -1 && cleaned[jsonStart] === '[' ? ']' : '}');
+      if (jsonStart === -1 || jsonEnd === -1) throw new Error("No JSON found");
+      cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
+      try {
+        courseData = JSON.parse(cleaned);
+      } catch {
+        // Fix trailing commas and control chars
+        cleaned = cleaned.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]").replace(/[\x00-\x1F\x7F]/g, "");
+        courseData = JSON.parse(cleaned);
+      }
+    } catch (parseErr) {
+      console.error("JSON parse error:", parseErr, "Raw content (last 200):", content.slice(-200));
       throw new Error("Failed to parse AI response as JSON");
     }
 
@@ -370,11 +381,11 @@ The course category is: ${category || "General"}.`;
     if (courseError) throw new Error(`Failed to save course: ${courseError.message}`);
 
     if (courseData.modules?.length) {
-      const modules = courseData.modules.map((m: any) => ({
+      const modules = courseData.modules.map((m: any, i: number) => ({
         course_id: course.id,
-        module_number: m.module_number,
-        title: m.module_title,
-        content: m.content,
+        module_number: m.module_number ?? (i + 1),
+        title: m.module_title || m.title || `Module ${i + 1}`,
+        content: m.content || "",
         key_points: m.key_points || [],
       }));
       const { error: modError } = await supabaseAdmin.from("course_modules").insert(modules);
@@ -382,16 +393,22 @@ The course category is: ${category || "General"}.`;
     }
 
     if (courseData.quiz?.length) {
-      const questions = courseData.quiz.map((q: any) => ({
-        course_id: course.id,
-        question_number: q.question_number,
-        question: q.question,
-        options: q.options,
-        correct_answer: q.correct_answer,
-        explanation: q.explanation,
-      }));
-      const { error: quizError } = await supabaseAdmin.from("quiz_questions").insert(questions);
-      if (quizError) console.error("Quiz insert error:", quizError);
+      const questions = courseData.quiz
+        .filter((q: any) => q.question && q.options && q.correct_answer)
+        .map((q: any, i: number) => ({
+          course_id: course.id,
+          question_number: q.question_number ?? (i + 1),
+          question: q.question,
+          options: q.options,
+          correct_answer: q.correct_answer,
+          explanation: q.explanation || "",
+        }));
+      if (questions.length > 0) {
+        const { error: quizError } = await supabaseAdmin.from("quiz_questions").insert(questions);
+        if (quizError) console.error("Quiz insert error:", quizError);
+      } else {
+        console.warn("No valid quiz questions to insert after filtering");
+      }
     }
 
     return new Response(JSON.stringify({ courseId: course.id }), {
