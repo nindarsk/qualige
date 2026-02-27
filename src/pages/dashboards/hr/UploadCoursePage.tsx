@@ -32,8 +32,17 @@ const CATEGORIES = [
 
 const LANGUAGES = ["English", "Georgian", "Russian"];
 
-const LOADING_MESSAGES = [
+const LOADING_MESSAGES_FILE = [
   "Analyzing your content...",
+  "Identifying key learning objectives...",
+  "Structuring course modules...",
+  "Generating quiz questions...",
+  "Almost ready...",
+];
+
+const LOADING_MESSAGES_YOUTUBE = [
+  "Extracting video transcript...",
+  "Analyzing transcript content...",
   "Identifying key learning objectives...",
   "Structuring course modules...",
   "Generating quiz questions...",
@@ -86,13 +95,16 @@ const UploadCoursePage = () => {
       return;
     }
 
+    const isYoutube = !file && !!youtubeUrl.trim();
+    const loadingMessages = isYoutube ? LOADING_MESSAGES_YOUTUBE : LOADING_MESSAGES_FILE;
+
     setIsGenerating(true);
     setProgress(0);
     setLoadingMsgIndex(0);
 
     // Cycle loading messages
     const msgInterval = setInterval(() => {
-      setLoadingMsgIndex((prev) => Math.min(prev + 1, LOADING_MESSAGES.length - 1));
+      setLoadingMsgIndex((prev) => Math.min(prev + 1, loadingMessages.length - 1));
     }, 5000);
 
     // Animate progress
@@ -151,7 +163,7 @@ const UploadCoursePage = () => {
             <Progress value={progress} className="h-3" />
           </div>
           <p className="text-lg text-muted-foreground animate-pulse">
-            {LOADING_MESSAGES[loadingMsgIndex]}
+            {(youtubeUrl.trim() ? LOADING_MESSAGES_YOUTUBE : LOADING_MESSAGES_FILE)[loadingMsgIndex]}
           </p>
         </div>
       </div>
@@ -218,6 +230,11 @@ const UploadCoursePage = () => {
             onChange={(e) => setYoutubeUrl(e.target.value)}
             disabled={!!file}
           />
+          {youtubeUrl.trim() && !file && (
+            <p className="mt-2 text-sm text-muted-foreground">
+              ℹ️ We will extract the video transcript to generate your course. Video must have captions enabled.
+            </p>
+          )}
         </CardContent>
       </Card>
 
