@@ -76,6 +76,10 @@ async function fetchYouTubeTranscript(videoId: string): Promise<string> {
       if (!pageResp.ok) { console.log(`Page fetch returned ${pageResp.status}`); continue; }
       const html = await pageResp.text();
       console.log(`Page HTML length: ${html.length}`);
+      
+      // Check if video has captions at all
+      const hasCaptions = html.includes("captionTracks") || html.includes("playerCaptionsTracklistRenderer");
+      console.log(`Video has captions data: ${hasCaptions}`);
 
       // Try multiple patterns to find caption URLs
       const patterns = [

@@ -134,7 +134,21 @@ const UploadCoursePage = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Extract the actual error message from the edge function response
+        const context = (error as any)?.context;
+        let errorMsg = "Something went wrong.";
+        if (context && typeof context === "object") {
+          try {
+            // context may be a Response object
+            const body = context.body ? await new Response(context.body).json() : null;
+            if (body?.error) errorMsg = body.error;
+          } catch {
+            // ignore parse errors
+          }
+        }
+        throw new Error(errorMsg);
+      }
       if (data?.error) throw new Error(data.error);
 
       setProgress(100);
