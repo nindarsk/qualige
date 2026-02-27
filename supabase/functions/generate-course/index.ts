@@ -10,6 +10,71 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function extractVideoId(url: string): string | null {
+  // Handle youtube.com/watch?v=ID
+  const watchMatch = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+  if (watchMatch) return watchMatch[1];
+  // Handle youtu.be/ID
+  const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
+  if (shortMatch) return shortMatch[1];
+  // Handle youtube.com/embed/ID
+  const embedMatch = url.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/);
+  if (embedMatch) return embedMatch[1];
+  return null;
+}
+
+function cleanTranscript(xml: string): string {
+  // Remove XML tags, decode entities, clean noise
+  let text = xml.replace(/<[^>]+>/g, " ");
+  text = text.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&apos;/g, "'");
+  text = text.replace(/\[Music\]/gi, "").replace(/\[Applause\]/gi, "").replace(/\[Laughter\]/gi, "");
+  text = text.replace(/\s+/g, " ").trim();
+  return text;
+}
+
+async function fetchYouTubeTranscript(videoId: string): Promise<string> {
+  const endpoints = [
+    `https://www.youtube.com/api/timedtext?lang=en&v=${videoId}`,
+    `https://video.google.com/timedtext?lang=en&v=${videoId}`,
+    `https://www.youtube.com/api/timedtext?v=${videoId}`,
+  ];
+
+  for (const url of endpoints) {
+    try {
+      const resp = await fetch(url);
+      if (!resp.ok) continue;
+      const xml = await resp.text();
+      if (!xml || xml.trim().length < 50) continue;
+      const cleaned = cleanTranscript(xml);
+      if (cleaned.length > 50) return cleaned;
+    } catch {
+      continue;
+    }
+  }
+
+  // Fallback: try fetching the page and extracting captions URL from player data
+  try {
+    const pageResp = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+      headers: { "User-Agent": "Mozilla/5.0", "Accept-Language": "en-US,en;q=0.9" },
+    });
+    const html = await pageResp.text();
+    const captionMatch = html.match(/"captionTracks":\[.*?"baseUrl":"(.*?)"/);
+    if (captionMatch) {
+      const captionUrl = captionMatch[1].replace(/\\u0026/g, "&");
+      const captionResp = await fetch(captionUrl);
+      if (captionResp.ok) {
+        const xml = await captionResp.text();
+        const cleaned = cleanTranscript(xml);
+        if (cleaned.length > 50) return cleaned;
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  return "";
+}
+
 async function extractText(fileData: Blob, fileName: string): Promise<string> {
   const ext = fileName.split(".").pop()?.toLowerCase();
   const arrayBuffer = await fileData.arrayBuffer();
@@ -35,7 +100,6 @@ async function extractText(fileData: Blob, fileName: string): Promise<string> {
     return text;
   }
 
-  // Fallback
   return new TextDecoder("utf-8", { fatal: false }).decode(arrayBuffer);
 }
 
@@ -97,7 +161,31 @@ serve(async (req) => {
         textContent = words.slice(0, 12000).join(" ");
       }
     } else if (youtubeUrl) {
-      textContent = `Please generate a comprehensive training course based on the content that would typically be covered in a video at this URL: ${youtubeUrl}. Focus on ${category || "professional development"} topics relevant to banking professionals.`;
+      const videoId = extractVideoId(youtubeUrl);
+      if (!videoId) {
+        return new Response(
+          JSON.stringify({ error: "Invalid YouTube URL. Please provide a valid YouTube video link." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      console.log("Extracting transcript for video:", videoId);
+      textContent = await fetchYouTubeTranscript(videoId);
+
+      if (!textContent || textContent.length < 100) {
+        return new Response(
+          JSON.stringify({ error: "Could not extract transcript from this YouTube video. The video may not have captions enabled. Please try a different video or upload a document instead." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      console.log("YouTube transcript (first 500 chars):", textContent.substring(0, 500));
+
+      const words = textContent.split(/\s+/);
+      if (words.length > 12000) {
+        console.warn(`Transcript has ${words.length} words, truncating to 12000.`);
+        textContent = words.slice(0, 12000).join(" ");
+      }
     } else {
       throw new Error("No file or YouTube URL provided");
     }
