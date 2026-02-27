@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronUp, Trash2, Plus, Check, Save, Rocket, Loader2 } from "lucide-react";
@@ -123,6 +124,9 @@ const CourseReviewPage = () => {
         .update({
           title: course.title,
           description: course.description,
+          duration_minutes: course.duration_minutes,
+          category: course.category,
+          language: course.language,
           learning_objectives: course.learning_objectives,
           status: publish ? "published" : "draft",
         })
@@ -222,12 +226,42 @@ const CourseReviewPage = () => {
           className="resize-none border-none bg-transparent p-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-muted-foreground"
           rows={2}
         />
-        <div className="flex flex-wrap gap-2">
-          {course.duration_minutes && (
-            <Badge variant="secondary">{course.duration_minutes} min</Badge>
-          )}
-          <Badge variant="secondary">{course.category}</Badge>
-          <Badge variant="secondary">{course.language}</Badge>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Duration (min)</label>
+            <Input
+              type="number"
+              value={course.duration_minutes ?? ""}
+              onChange={(e) => updateCourseField("duration_minutes", e.target.value ? parseInt(e.target.value) : null)}
+              className="h-8 w-20 text-sm"
+            />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Category</label>
+            <Select value={course.category} onValueChange={(v) => updateCourseField("category", v)}>
+              <SelectTrigger className="h-8 w-[140px] text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {["Compliance", "AML", "Customer Service", "Risk Management", "IT Security", "HR Policy", "Other"].map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Language</label>
+            <Select value={course.language} onValueChange={(v) => updateCourseField("language", v)}>
+              <SelectTrigger className="h-8 w-[120px] text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {["English", "Georgian", "Russian"].map((l) => (
+                  <SelectItem key={l} value={l}>{l}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <Badge variant={course.status === "published" ? "default" : "outline"}>
             {course.status}
           </Badge>
