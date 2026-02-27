@@ -234,8 +234,8 @@ const UploadCoursePage = () => {
         </CardContent>
       </Card>
 
-      {/* YouTube URL */}
-      <Card>
+      {/* YouTube URL - hidden for now, can be re-enabled later */}
+      {/* <Card>
         <CardContent className="p-6">
           <label className="mb-2 block text-sm font-medium text-foreground">Or paste a YouTube URL</label>
           <Input
@@ -250,7 +250,7 @@ const UploadCoursePage = () => {
             </p>
           )}
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Settings */}
       <div className="grid gap-4 sm:grid-cols-2">
@@ -281,7 +281,7 @@ const UploadCoursePage = () => {
       {/* Generate Button */}
       <Button
         onClick={handleGenerate}
-        disabled={!file && !youtubeUrl.trim()}
+        disabled={!file}
         className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-12 text-base font-semibold"
       >
         Generate Course with AI
