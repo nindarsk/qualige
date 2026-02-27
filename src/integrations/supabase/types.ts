@@ -14,6 +14,103 @@ export type Database = {
   }
   public: {
     Tables: {
+      course_modules: {
+        Row: {
+          content: string
+          course_id: string
+          created_at: string
+          id: string
+          key_points: string[] | null
+          module_number: number
+          title: string
+        }
+        Insert: {
+          content?: string
+          course_id: string
+          created_at?: string
+          id?: string
+          key_points?: string[] | null
+          module_number: number
+          title: string
+        }
+        Update: {
+          content?: string
+          course_id?: string
+          created_at?: string
+          id?: string
+          key_points?: string[] | null
+          module_number?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_modules_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      courses: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          language: string
+          learning_objectives: string[] | null
+          organization_id: string
+          source_file_path: string | null
+          source_youtube_url: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          language?: string
+          learning_objectives?: string[] | null
+          organization_id: string
+          source_file_path?: string | null
+          source_youtube_url?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          language?: string
+          learning_objectives?: string[] | null
+          organization_id?: string
+          source_file_path?: string | null
+          source_youtube_url?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           created_at: string
@@ -69,6 +166,47 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_questions: {
+        Row: {
+          correct_answer: string
+          course_id: string
+          created_at: string
+          explanation: string | null
+          id: string
+          options: string[]
+          question: string
+          question_number: number
+        }
+        Insert: {
+          correct_answer: string
+          course_id: string
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          options?: string[]
+          question: string
+          question_number: number
+        }
+        Update: {
+          correct_answer?: string
+          course_id?: string
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          options?: string[]
+          question?: string
+          question_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
             referencedColumns: ["id"]
           },
         ]

@@ -16,6 +16,9 @@ import HRDashboard from "./pages/dashboards/HRDashboard";
 import EmployeeDashboard from "./pages/dashboards/EmployeeDashboard";
 import SuperAdminDashboard from "./pages/dashboards/SuperAdminDashboard";
 import DashboardPlaceholder from "./components/DashboardPlaceholder";
+import UploadCoursePage from "./pages/dashboards/hr/UploadCoursePage";
+import CoursesListPage from "./pages/dashboards/hr/CoursesListPage";
+import CourseReviewPage from "./pages/dashboards/hr/CourseReviewPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,7 +49,9 @@ const App = () => (
               }
             >
               <Route index element={<DashboardPlaceholder title="Dashboard" description="Welcome to your HR Admin dashboard. Course management and analytics coming soon." />} />
-              <Route path="courses" element={<DashboardPlaceholder title="Courses" description="Manage training courses for your organization." />} />
+              <Route path="upload" element={<UploadCoursePage />} />
+              <Route path="courses" element={<CoursesListPage />} />
+              <Route path="courses/:id/review" element={<CourseReviewPage />} />
               <Route path="employees" element={<DashboardPlaceholder title="Employees" description="Manage employee accounts and training progress." />} />
               <Route path="reports" element={<DashboardPlaceholder title="Reports" description="View compliance reports and training analytics." />} />
               <Route path="settings" element={<DashboardPlaceholder title="Settings" description="Organization settings and configuration." />} />
