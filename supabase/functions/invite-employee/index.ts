@@ -73,7 +73,8 @@ Deno.serve(async (req) => {
       .eq("id", profile.organization_id)
       .single();
 
-    const { fullName, email, department } = await req.json();
+    const body = await req.json();
+    const { fullName, email, department, resend } = body;
 
     if (!fullName || !email) {
       return new Response(JSON.stringify({ error: "Name and email required" }), {
@@ -81,7 +82,7 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
+    
     // Check if employee already exists in this org
     const { data: existing } = await supabaseAdmin
       .from("employees")
@@ -90,7 +91,7 @@ Deno.serve(async (req) => {
       .eq("organization_id", profile.organization_id)
       .maybeSingle();
 
-    if (existing) {
+    if (existing && !resend) {
       return new Response(JSON.stringify({ error: "Employee with this email already exists" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -111,6 +112,45 @@ Deno.serve(async (req) => {
     });
 
     if (inviteError) {
+      // If user already registered, still allow creating the employee record
+      if (inviteError.message?.includes("already been registered")) {
+        // Look up the existing auth user
+        const { data: usersData } = await supabaseAdmin.auth.admin.listUsers();
+        const existingAuthUser = usersData?.users?.find(u => u.email === email);
+        
+        if (existing) {
+          // Resend case — just return success
+          return new Response(JSON.stringify({ employee: existing, message: "User already exists, invitation noted." }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        
+        // Create employee record linked to existing auth user
+        const { data: employee, error: empError } = await supabaseAdmin
+          .from("employees")
+          .insert({
+            organization_id: profile.organization_id,
+            user_id: existingAuthUser?.id || null,
+            full_name: fullName,
+            email,
+            department: department || null,
+            status: existingAuthUser ? "active" : "pending",
+          })
+          .select()
+          .single();
+
+        if (empError) {
+          return new Response(JSON.stringify({ error: empError.message }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        return new Response(JSON.stringify({ employee }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       console.error("Invite error:", inviteError);
       return new Response(JSON.stringify({ error: inviteError.message }), {
         status: 400,
