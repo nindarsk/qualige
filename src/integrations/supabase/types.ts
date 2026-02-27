@@ -14,6 +14,61 @@ export type Database = {
   }
   public: {
     Tables: {
+      certificates: {
+        Row: {
+          certificate_id: string
+          course_id: string
+          created_at: string
+          employee_id: string
+          id: string
+          issued_at: string
+          organization_id: string
+          pdf_url: string | null
+        }
+        Insert: {
+          certificate_id: string
+          course_id: string
+          created_at?: string
+          employee_id: string
+          id?: string
+          issued_at?: string
+          organization_id: string
+          pdf_url?: string | null
+        }
+        Update: {
+          certificate_id?: string
+          course_id?: string
+          created_at?: string
+          employee_id?: string
+          id?: string
+          issued_at?: string
+          organization_id?: string
+          pdf_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificates_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificates_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_assignments: {
         Row: {
           assigned_at: string
@@ -109,6 +164,67 @@ export type Database = {
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_progress: {
+        Row: {
+          assignment_id: string
+          completed_at: string | null
+          completed_modules: string[]
+          course_id: string
+          created_at: string
+          current_module: number
+          employee_id: string
+          id: string
+          started_at: string
+          updated_at: string
+        }
+        Insert: {
+          assignment_id: string
+          completed_at?: string | null
+          completed_modules?: string[]
+          course_id: string
+          created_at?: string
+          current_module?: number
+          employee_id: string
+          id?: string
+          started_at?: string
+          updated_at?: string
+        }
+        Update: {
+          assignment_id?: string
+          completed_at?: string | null
+          completed_modules?: string[]
+          course_id?: string
+          created_at?: string
+          current_module?: number
+          employee_id?: string
+          id?: string
+          started_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_progress_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: true
+            referencedRelation: "course_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_progress_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_progress_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
         ]
@@ -277,6 +393,54 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_attempts: {
+        Row: {
+          answers: Json
+          attempted_at: string
+          course_id: string
+          created_at: string
+          employee_id: string
+          id: string
+          passed: boolean
+          score: number
+        }
+        Insert: {
+          answers?: Json
+          attempted_at?: string
+          course_id: string
+          created_at?: string
+          employee_id: string
+          id?: string
+          passed?: boolean
+          score: number
+        }
+        Update: {
+          answers?: Json
+          attempted_at?: string
+          course_id?: string
+          created_at?: string
+          employee_id?: string
+          id?: string
+          passed?: boolean
+          score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_attempts_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_attempts_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
         ]
