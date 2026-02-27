@@ -1,51 +1,85 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { BookOpen, Loader2 } from "lucide-react";
+import { BookOpen, Loader2, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+
+const passwordRequirements = [
+  { label: "Minimum 8 characters", test: (v: string) => v.length >= 8 },
+  { label: "At least one uppercase letter", test: (v: string) => /[A-Z]/.test(v) },
+  { label: "At least one number", test: (v: string) => /[0-9]/.test(v) },
+  { label: "At least one special character (!@#$%^&)*", test: (v: string) => /[!@#$%^&)*]/.test(v) },
+];
+
+const registerSchema = z
+  .object({
+    companyName: z.string().trim().min(1, "This field is required").max(200),
+    fullName: z.string().trim().min(1, "This field is required").max(200),
+    email: z.string().trim().min(1, "This field is required").email("Please enter a valid email address").max(255),
+    password: z
+      .string()
+      .min(1, "This field is required")
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[A-Z]/, "Password must contain an uppercase letter")
+      .regex(/[0-9]/, "Password must contain a number")
+      .regex(/[!@#$%^&)*]/, "Password must contain a special character"),
+    confirmPassword: z.string().min(1, "This field is required"),
+    agreedToTerms: z.literal(true, {
+      errorMap: () => ({ message: "You must agree to the terms" }),
+    }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
+type RegisterForm = z.infer<typeof registerSchema>;
 
 const RegisterPage = () => {
-  const [companyName, setCompanyName] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const formRef = useRef<HTMLFormElement>(null);
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<RegisterForm>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      companyName: "",
+      fullName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      agreedToTerms: false as any,
+    },
+  });
 
-    if (password !== confirmPassword) {
-      toast({ title: "Passwords do not match", variant: "destructive" });
-      return;
-    }
-    if (!agreedToTerms) {
-      toast({ title: "Please agree to the terms", variant: "destructive" });
-      return;
-    }
-    if (password.length < 8) {
-      toast({ title: "Password must be at least 8 characters", variant: "destructive" });
-      return;
-    }
+  const password = watch("password", "");
+  const confirmPassword = watch("confirmPassword", "");
 
+  const onSubmit = async (data: RegisterForm) => {
     setLoading(true);
     try {
-      // 1. Sign up user
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
+        email: data.email,
+        password: data.password,
         options: {
           emailRedirectTo: window.location.origin,
           data: {
-            full_name: fullName,
-            company_name: companyName,
+            full_name: data.fullName,
+            company_name: data.companyName,
           },
         },
       });
@@ -53,27 +87,24 @@ const RegisterPage = () => {
       if (authError) throw authError;
 
       if (authData.user) {
-        // 2. Create organization
         const { data: orgData, error: orgError } = await supabase
           .from("organizations")
-          .insert({ name: companyName })
+          .insert({ name: data.companyName })
           .select()
           .single();
 
         if (orgError) throw orgError;
 
-        // 3. Create profile
         const { error: profileError } = await supabase
           .from("profiles")
           .insert({
             user_id: authData.user.id,
             organization_id: orgData.id,
-            full_name: fullName,
+            full_name: data.fullName,
           });
 
         if (profileError) throw profileError;
 
-        // 4. Assign HR Admin role
         const { error: roleError } = await supabase
           .from("user_roles")
           .insert({
@@ -99,6 +130,24 @@ const RegisterPage = () => {
       setLoading(false);
     }
   };
+
+  const onError = () => {
+    // Scroll to first error
+    const firstError = formRef.current?.querySelector('[data-error="true"]');
+    firstError?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
+  const passwordsMismatch = confirmPassword.length > 0 && password !== confirmPassword;
+
+  const FieldLabel = ({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) => (
+    <label htmlFor={htmlFor} className="text-sm font-medium leading-none">
+      {children} <span className="text-destructive">*</span>
+    </label>
+  );
+
+  const FieldError = ({ message }: { message?: string }) =>
+    message ? <p className="text-sm text-destructive mt-1">{message}</p> : null;
 
   return (
     <div className="flex min-h-screen">
@@ -130,33 +179,111 @@ const RegisterPage = () => {
           <h1 className="mb-2 text-2xl font-bold text-foreground">Register Your Organization</h1>
           <p className="mb-8 text-muted-foreground">Create an account to get started with Quali</p>
 
-          <form onSubmit={handleRegister} className="space-y-4">
-            <div>
-              <Label htmlFor="companyName">Company Name</Label>
-              <Input id="companyName" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Acme Financial Corp" required />
+          <form ref={formRef} onSubmit={handleSubmit(onSubmit, onError)} className="space-y-4">
+            {/* Company Name */}
+            <div data-error={!!errors.companyName}>
+              <FieldLabel htmlFor="companyName">Company Name</FieldLabel>
+              <Input
+                id="companyName"
+                placeholder="Acme Financial Corp"
+                className={cn(errors.companyName && "border-destructive focus-visible:ring-destructive")}
+                {...register("companyName")}
+              />
+              <FieldError message={errors.companyName?.message} />
             </div>
-            <div>
-              <Label htmlFor="fullName">HR Admin Full Name</Label>
-              <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Jane Doe" required />
+
+            {/* Full Name */}
+            <div data-error={!!errors.fullName}>
+              <FieldLabel htmlFor="fullName">HR Admin Full Name</FieldLabel>
+              <Input
+                id="fullName"
+                placeholder="Jane Doe"
+                className={cn(errors.fullName && "border-destructive focus-visible:ring-destructive")}
+                {...register("fullName")}
+              />
+              <FieldError message={errors.fullName?.message} />
             </div>
-            <div>
-              <Label htmlFor="email">Work Email</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@acme.com" required />
+
+            {/* Email */}
+            <div data-error={!!errors.email}>
+              <FieldLabel htmlFor="email">Work Email</FieldLabel>
+              <Input
+                id="email"
+                type="email"
+                placeholder="jane@acme.com"
+                className={cn(errors.email && "border-destructive focus-visible:ring-destructive")}
+                {...register("email")}
+              />
+              <FieldError message={errors.email?.message} />
             </div>
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min. 8 characters" required />
+
+            {/* Password */}
+            <div data-error={!!errors.password}>
+              <FieldLabel htmlFor="password">Password</FieldLabel>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                className={cn(errors.password && "border-destructive focus-visible:ring-destructive")}
+                {...register("password")}
+              />
+              <FieldError message={errors.password?.message} />
+              {/* Password requirements checklist */}
+              <ul className="mt-2 space-y-1">
+                {passwordRequirements.map((req) => {
+                  const met = req.test(password);
+                  return (
+                    <li key={req.label} className={cn("flex items-center gap-2 text-xs", met ? "text-green-600" : "text-muted-foreground")}>
+                      {met ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                      {req.label}
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
-            <div>
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirm your password" required />
+
+            {/* Confirm Password */}
+            <div data-error={!!errors.confirmPassword}>
+              <FieldLabel htmlFor="confirmPassword">Confirm Password</FieldLabel>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="Confirm your password"
+                  className={cn(
+                    errors.confirmPassword && "border-destructive focus-visible:ring-destructive",
+                    passwordsMatch && "border-green-500 focus-visible:ring-green-500",
+                    "pr-10"
+                  )}
+                  {...register("confirmPassword")}
+                />
+                {confirmPassword.length > 0 && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {passwordsMatch ? (
+                      <Check className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <X className="h-4 w-4 text-destructive" />
+                    )}
+                  </span>
+                )}
+              </div>
+              <FieldError message={errors.confirmPassword?.message} />
             </div>
-            <div className="flex items-start gap-2">
-              <Checkbox id="terms" checked={agreedToTerms} onCheckedChange={(c) => setAgreedToTerms(c === true)} />
-              <Label htmlFor="terms" className="text-sm leading-tight text-muted-foreground">
-                I agree to the Terms of Service and Privacy Policy
-              </Label>
+
+            {/* Terms */}
+            <div data-error={!!errors.agreedToTerms}>
+              <div className="flex items-start gap-2">
+                <Checkbox
+                  id="terms"
+                  onCheckedChange={(c) => setValue("agreedToTerms", c === true ? true : false as any, { shouldValidate: true })}
+                />
+                <label htmlFor="terms" className="text-sm leading-tight text-muted-foreground">
+                  I agree to the Terms of Service and Privacy Policy <span className="text-destructive">*</span>
+                </label>
+              </div>
+              <FieldError message={errors.agreedToTerms?.message} />
             </div>
+
             <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Register Organization
