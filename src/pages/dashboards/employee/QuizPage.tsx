@@ -74,12 +74,14 @@ const QuizPage = () => {
     if (!employeeId) return;
     setSubmitting(true);
 
-    // Calculate score
+    // Calculate score — normalize answers to compare first letter (A/B/C/D)
+    const normalize = (answer: string) => answer?.toString().trim().charAt(0).toUpperCase();
     let correct = 0;
     const answerDetails = questions.map((q) => {
       const userAnswer = answers[q.id] || "";
-      const isCorrect = userAnswer === q.correct_answer;
+      const isCorrect = normalize(userAnswer) === normalize(q.correct_answer);
       if (isCorrect) correct++;
+      console.log(`[Quiz] Q${q.question_number}: selected="${userAnswer}" (${normalize(userAnswer)}), correct="${q.correct_answer}" (${normalize(q.correct_answer)}), match=${isCorrect}`);
       return {
         question_id: q.id,
         question: q.question,
