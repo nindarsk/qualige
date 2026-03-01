@@ -18,6 +18,7 @@ const EmployeeCertificatesPage = () => {
   const { user } = useAuth();
   const [certificates, setCertificates] = useState<Cert[]>([]);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) fetchCerts();
@@ -62,6 +63,28 @@ const EmployeeCertificatesPage = () => {
     setLoading(false);
   };
 
+  const handleDownload = async (cert: Cert) => {
+    // Try generating a fresh signed URL on demand
+    if (!user) return;
+    setDownloading(cert.id);
+    try {
+      const filePath = `${user.id}/${cert.certificate_id}.pdf`;
+      const { data } = await supabase.storage
+        .from("certificates")
+        .createSignedUrl(filePath, 60 * 60);
+      
+      if (data?.signedUrl) {
+        window.open(data.signedUrl, "_blank");
+      } else if (cert.pdf_url) {
+        window.open(cert.pdf_url, "_blank");
+      }
+    } catch {
+      if (cert.pdf_url) window.open(cert.pdf_url, "_blank");
+    } finally {
+      setDownloading(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -102,16 +125,20 @@ const EmployeeCertificatesPage = () => {
               <p className="text-center text-xs text-muted-foreground font-mono mt-1">
                 {cert.certificate_id}
               </p>
-              {cert.pdf_url && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-4 w-full"
-                  onClick={() => window.open(cert.pdf_url!, "_blank")}
-                >
-                  <Download className="mr-2 h-4 w-4" /> Download PDF
-                </Button>
-              )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4 w-full"
+                disabled={downloading === cert.id}
+                onClick={() => handleDownload(cert)}
+              >
+                {downloading === cert.id ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="mr-2 h-4 w-4" />
+                )}
+                Download PDF
+              </Button>
             </CardContent>
           </Card>
         ))}
