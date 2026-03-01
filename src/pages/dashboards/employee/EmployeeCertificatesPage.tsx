@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { downloadCertificate } from "@/lib/download-certificate";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -64,22 +65,12 @@ const EmployeeCertificatesPage = () => {
   };
 
   const handleDownload = async (cert: Cert) => {
-    // Try generating a fresh signed URL on demand
     if (!user) return;
     setDownloading(cert.id);
     try {
-      const filePath = `${user.id}/${cert.certificate_id}.pdf`;
-      const { data } = await supabase.storage
-        .from("certificates")
-        .createSignedUrl(filePath, 60 * 60);
-      
-      if (data?.signedUrl) {
-        window.open(data.signedUrl, "_blank");
-      } else if (cert.pdf_url) {
-        window.open(cert.pdf_url, "_blank");
-      }
+      await downloadCertificate(cert.certificate_id, user.id);
     } catch {
-      if (cert.pdf_url) window.open(cert.pdf_url, "_blank");
+      alert("Download failed. Please try again.");
     } finally {
       setDownloading(null);
     }
