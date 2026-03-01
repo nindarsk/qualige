@@ -62,6 +62,9 @@ const LandingPage = () => {
           </Link>
           <div className="flex items-center gap-3">
             <Button variant="ghost" asChild>
+              <Link to="/pricing">Pricing</Link>
+            </Button>
+            <Button variant="ghost" asChild>
               <Link to="/login">Sign In</Link>
             </Button>
             <Button asChild className="gradient-gold border-0 text-accent-foreground hover:opacity-90">

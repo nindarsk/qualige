@@ -342,19 +342,40 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          max_employees: number
           name: string
+          plan: string
+          plan_ends_at: string | null
+          plan_started_at: string | null
+          plan_status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           id?: string
+          max_employees?: number
           name: string
+          plan?: string
+          plan_ends_at?: string | null
+          plan_started_at?: string | null
+          plan_status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           id?: string
+          max_employees?: number
           name?: string
+          plan?: string
+          plan_ends_at?: string | null
+          plan_started_at?: string | null
+          plan_status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           updated_at?: string
         }
         Relationships: []
