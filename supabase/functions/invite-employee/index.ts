@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
           organization_id: profile.organization_id,
           role: "employee",
         },
-        redirectTo: `${req.headers.get("origin") || supabaseUrl}/invite/accept`,
+      redirectTo: "https://qualige.lovable.app/invite/accept",
       });
 
       if (resendError) {
@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
               organization_id: profile.organization_id,
               role: "employee",
             },
-            redirectTo: `${req.headers.get("origin") || supabaseUrl}/invite/accept`,
+      redirectTo: "https://qualige.lovable.app/invite/accept",
           });
 
           if (reInviteError) {
@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
         organization_id: profile.organization_id,
         role: "employee",
       },
-      redirectTo: `${req.headers.get("origin") || supabaseUrl}/invite/accept`,
+      redirectTo: "https://qualige.lovable.app/invite/accept",
     });
 
     if (inviteError) {
@@ -198,7 +198,7 @@ Deno.serve(async (req) => {
             organization_id: profile.organization_id,
             role: "employee",
           },
-          redirectTo: `${req.headers.get("origin") || supabaseUrl}/invite/accept`,
+          redirectTo: "https://qualige.lovable.app/invite/accept",
         });
 
         if (reInviteError) {
