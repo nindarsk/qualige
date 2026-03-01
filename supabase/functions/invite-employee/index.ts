@@ -177,16 +177,25 @@ Deno.serve(async (req) => {
           });
         }
         
-        // Create employee record linked to existing auth user
+        // Send a magic link so the user must re-authenticate
+        await supabaseAdmin.auth.admin.generateLink({
+          type: "magiclink",
+          email,
+          options: {
+            redirectTo: `${req.headers.get("origin") || supabaseUrl}/invite/accept`,
+          },
+        });
+
+        // Create employee record as PENDING — they must click the link to activate
         const { data: employee, error: empError } = await supabaseAdmin
           .from("employees")
           .insert({
             organization_id: profile.organization_id,
-            user_id: existingAuthUser?.id || null,
+            user_id: null,
             full_name: fullName,
             email,
             department: department || null,
-            status: existingAuthUser ? "active" : "pending",
+            status: "pending",
           })
           .select()
           .single();
