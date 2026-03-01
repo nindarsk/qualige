@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -40,11 +40,13 @@ const InviteAcceptPage = () => {
   const [pageLoading, setPageLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [tokenValid, setTokenValid] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [orgName, setOrgName] = useState("");
   const [inviteFullName, setInviteFullName] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const formRef = useRef<HTMLFormElement>(null);
 
   const {
@@ -64,46 +66,108 @@ const InviteAcceptPage = () => {
   useEffect(() => {
     const handleInviteToken = async () => {
       try {
-        // Supabase will have already exchanged the token via the URL hash
+        // Strategy 1: Check for token_hash in query params (Supabase PKCE / email link flow)
+        const tokenHash = searchParams.get("token_hash");
+        const type = searchParams.get("type");
+
+        if (tokenHash && (type === "invite" || type === "magiclink" || type === "email")) {
+          const { data, error } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: type === "invite" ? "invite" : type === "magiclink" ? "magiclink" : "email",
+          });
+
+          if (error) {
+            console.error("Token verification error:", error);
+            if (error.message?.includes("expired")) {
+              setErrorMessage("This invitation link has expired. Please contact your HR manager to resend the invitation.");
+            } else {
+              setErrorMessage("This invitation link is not valid. Please contact your HR manager.");
+            }
+            setTokenValid(false);
+            setPageLoading(false);
+            return;
+          }
+
+          if (data?.session) {
+            await setupFromSession(data.session);
+            return;
+          }
+        }
+
+        // Strategy 2: Check for access_token in URL hash (implicit flow)
+        const hash = window.location.hash;
+        if (hash) {
+          const hashParams = new URLSearchParams(hash.substring(1));
+          const accessToken = hashParams.get("access_token");
+          const refreshToken = hashParams.get("refresh_token");
+
+          if (accessToken && refreshToken) {
+            const { data, error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+
+            if (error) {
+              console.error("Session set error:", error);
+              setErrorMessage("This invitation link is not valid. Please contact your HR manager.");
+              setTokenValid(false);
+              setPageLoading(false);
+              return;
+            }
+
+            if (data?.session) {
+              // Clear the hash from URL
+              window.history.replaceState(null, "", window.location.pathname + window.location.search);
+              await setupFromSession(data.session);
+              return;
+            }
+          }
+        }
+
+        // Strategy 3: Check if there's already a valid session (auto-exchanged by Supabase client)
         const { data: { session }, error } = await supabase.auth.getSession();
 
-        if (error || !session) {
-          setTokenValid(false);
-          setPageLoading(false);
+        if (session && !error) {
+          await setupFromSession(session);
           return;
         }
 
-        const user = session.user;
-        setUserEmail(user.email || "");
-        setTokenValid(true);
-
-        // Extract metadata from invitation
-        const meta = user.user_metadata || {};
-        const fullName = meta.full_name || "";
-        const orgId = meta.organization_id || "";
-
-        setInviteFullName(fullName);
-        if (fullName) setValue("fullName", fullName);
-
-        // Fetch org name
-        if (orgId) {
-          const { data: orgData } = await supabase
-            .from("organizations")
-            .select("name")
-            .eq("id", orgId)
-            .single();
-          if (orgData) setOrgName(orgData.name);
-        }
+        // No valid token found
+        setErrorMessage("This invitation link is not valid or has expired. Please contact your HR manager for a new invitation.");
+        setTokenValid(false);
       } catch (err) {
         console.error("Error processing invite:", err);
+        setErrorMessage("An error occurred while processing your invitation. Please try again or contact your HR manager.");
         setTokenValid(false);
       } finally {
         setPageLoading(false);
       }
     };
 
+    const setupFromSession = async (session: any) => {
+      const user = session.user;
+      setUserEmail(user.email || "");
+      setTokenValid(true);
+
+      const meta = user.user_metadata || {};
+      const fullName = meta.full_name || "";
+      const orgId = meta.organization_id || "";
+
+      setInviteFullName(fullName);
+      if (fullName) setValue("fullName", fullName);
+
+      if (orgId) {
+        const { data: orgData } = await supabase
+          .from("organizations")
+          .select("name")
+          .eq("id", orgId)
+          .single();
+        if (orgData) setOrgName(orgData.name);
+      }
+    };
+
     handleInviteToken();
-  }, [setValue]);
+  }, [setValue, searchParams]);
 
   const onSubmit = async (data: SetupForm) => {
     setSubmitting(true);
@@ -131,14 +195,12 @@ const InviteAcceptPage = () => {
         .maybeSingle();
 
       if (!existingProfile && orgId) {
-        // Create profile linked to organization
         await supabase.from("profiles").insert({
           user_id: user.id,
           full_name: data.fullName,
           organization_id: orgId,
         });
       } else if (existingProfile) {
-        // Update profile with org and name
         await supabase
           .from("profiles")
           .update({ full_name: data.fullName, organization_id: orgId })
@@ -157,9 +219,6 @@ const InviteAcceptPage = () => {
           user_id: user.id,
           role: "employee" as any,
         });
-      } else {
-        // The trigger may have assigned hr_admin. We need to fix this for invited employees.
-        // We can't update user_roles directly (no UPDATE policy), but the edge function handles this.
       }
 
       // Update employee record to active
@@ -219,7 +278,7 @@ const InviteAcceptPage = () => {
           </div>
           <h1 className="mb-3 text-2xl font-bold text-foreground">Invalid Invitation</h1>
           <p className="text-muted-foreground">
-            This invitation link is invalid or has expired. Please contact your HR manager for a new invitation.
+            {errorMessage || "This invitation link is invalid or has expired. Please contact your HR manager for a new invitation."}
           </p>
         </div>
       </div>
