@@ -368,6 +368,7 @@ export type Database = {
           organization_id: string | null
           updated_at: string
           user_id: string
+          welcome_banner_dismissed: boolean
         }
         Insert: {
           avatar_url?: string | null
@@ -377,6 +378,7 @@ export type Database = {
           organization_id?: string | null
           updated_at?: string
           user_id: string
+          welcome_banner_dismissed?: boolean
         }
         Update: {
           avatar_url?: string | null
@@ -386,6 +388,7 @@ export type Database = {
           organization_id?: string | null
           updated_at?: string
           user_id?: string
+          welcome_banner_dismissed?: boolean
         }
         Relationships: [
           {

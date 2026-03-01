@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, BookOpen, Award, Calendar, PlayCircle } from "lucide-react";
+import WelcomeBanner from "@/components/WelcomeBanner";
 
 interface Assignment {
   id: string;
@@ -116,6 +117,7 @@ const EmployeeCoursesPage = () => {
 
   return (
     <div className="space-y-8">
+      <WelcomeBanner />
       <div>
         <h1 className="text-2xl font-bold text-foreground">
           Hello {fullName?.split(" ")[0] || "there"}, here are your assigned courses

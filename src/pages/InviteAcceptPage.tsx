@@ -6,7 +6,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { BookOpen, Loader2, Check, X, AlertTriangle } from "lucide-react";
+import { BookOpen, Loader2, Check, X, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +40,7 @@ const InviteAcceptPage = () => {
   const [pageLoading, setPageLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [tokenValid, setTokenValid] = useState(false);
+  const [setupComplete, setSetupComplete] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [orgName, setOrgName] = useState("");
@@ -66,7 +67,6 @@ const InviteAcceptPage = () => {
   useEffect(() => {
     const handleInviteToken = async () => {
       try {
-        // Strategy 1: Check for token_hash in query params (Supabase PKCE / email link flow)
         const tokenHash = searchParams.get("token_hash");
         const type = searchParams.get("type");
 
@@ -94,7 +94,6 @@ const InviteAcceptPage = () => {
           }
         }
 
-        // Strategy 2: Check for access_token in URL hash (implicit flow)
         const hash = window.location.hash;
         if (hash) {
           const hashParams = new URLSearchParams(hash.substring(1));
@@ -108,7 +107,6 @@ const InviteAcceptPage = () => {
             });
 
             if (error) {
-              console.error("Session set error:", error);
               setErrorMessage("This invitation link is not valid. Please contact your HR manager.");
               setTokenValid(false);
               setPageLoading(false);
@@ -116,7 +114,6 @@ const InviteAcceptPage = () => {
             }
 
             if (data?.session) {
-              // Clear the hash from URL
               window.history.replaceState(null, "", window.location.pathname + window.location.search);
               await setupFromSession(data.session);
               return;
@@ -124,15 +121,12 @@ const InviteAcceptPage = () => {
           }
         }
 
-        // Strategy 3: Check if there's already a valid session (auto-exchanged by Supabase client)
         const { data: { session }, error } = await supabase.auth.getSession();
-
         if (session && !error) {
           await setupFromSession(session);
           return;
         }
 
-        // No valid token found
         setErrorMessage("This invitation link is not valid or has expired. Please contact your HR manager for a new invitation.");
         setTokenValid(false);
       } catch (err) {
@@ -223,19 +217,37 @@ const InviteAcceptPage = () => {
 
       // Update employee record to active
       if (orgId) {
-        await supabase
+        const { data: existingEmployee } = await supabase
           .from("employees")
-          .update({ user_id: user.id, status: "active", joined_at: new Date().toISOString() })
+          .select("id")
           .eq("email", user.email!)
-          .eq("organization_id", orgId);
+          .eq("organization_id", orgId)
+          .maybeSingle();
+
+        if (existingEmployee) {
+          await supabase
+            .from("employees")
+            .update({ user_id: user.id, status: "active", joined_at: new Date().toISOString() })
+            .eq("email", user.email!)
+            .eq("organization_id", orgId);
+        } else {
+          // Edge case: no employee record exists, create one
+          await supabase.from("employees").insert({
+            email: user.email!,
+            full_name: data.fullName,
+            organization_id: orgId,
+            user_id: user.id,
+            status: "active",
+            joined_at: new Date().toISOString(),
+          });
+        }
       }
 
-      toast({
-        title: "Account set up successfully!",
-        description: "Welcome to Quali. Let's get started with your training.",
-      });
-
-      navigate("/employee");
+      // Show success state, then redirect after 2 seconds
+      setSetupComplete(true);
+      setTimeout(() => {
+        navigate("/employee");
+      }, 2000);
     } catch (error: any) {
       toast({
         title: "Setup failed",
@@ -280,6 +292,21 @@ const InviteAcceptPage = () => {
           <p className="text-muted-foreground">
             {errorMessage || "This invitation link is invalid or has expired. Please contact your HR manager for a new invitation."}
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (setupComplete) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background p-8">
+        <div className="w-full max-w-md text-center">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
+            <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+          </div>
+          <h1 className="mb-3 text-2xl font-bold text-foreground">Account created successfully!</h1>
+          <p className="text-lg text-foreground mb-1">Welcome to Quali.ge.</p>
+          <p className="text-muted-foreground">Redirecting you to your training dashboard...</p>
         </div>
       </div>
     );
