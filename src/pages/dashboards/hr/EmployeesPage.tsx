@@ -45,6 +45,37 @@ const EmployeesPage = () => {
 
   useEffect(() => {
     fetchEmployees();
+
+    // Subscribe to realtime changes on employees table
+    const channel = supabase
+      .channel("employees-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "employees" },
+        (payload) => {
+          if (payload.eventType === "UPDATE") {
+            const updated = payload.new as any;
+            setEmployees((prev) =>
+              prev.map((e) =>
+                e.id === updated.id
+                  ? { ...e, status: updated.status, joined_at: updated.joined_at, user_id: updated.user_id, full_name: updated.full_name }
+                  : e
+              )
+            );
+          } else if (payload.eventType === "INSERT") {
+            // Refetch to get enriched data
+            fetchEmployees();
+          } else if (payload.eventType === "DELETE") {
+            const old = payload.old as any;
+            setEmployees((prev) => prev.filter((e) => e.id !== old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchEmployees = async () => {
