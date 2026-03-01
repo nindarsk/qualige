@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { generateAndUploadCertificate } from "@/lib/generate-certificate-pdf";
+import { downloadCertificate } from "@/lib/download-certificate";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +24,8 @@ const QuizResultsPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [generating, setGenerating] = useState(false);
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [certId, setCertId] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
 
   const state = location.state as {
     score: number;
@@ -39,7 +41,7 @@ const QuizResultsPage = () => {
       setGenerating(true);
       generateAndUploadCertificate(courseId, user.id, state.score)
         .then((result) => {
-          if (result?.pdfUrl) setPdfUrl(result.pdfUrl);
+          if (result?.certificateId) setCertId(result.certificateId);
         })
         .catch(console.error)
         .finally(() => setGenerating(false));
@@ -89,9 +91,20 @@ const QuizResultsPage = () => {
             </p>
 
             <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
-              {passed && pdfUrl && (
-                <Button onClick={() => window.open(pdfUrl, "_blank")}>
-                  <Download className="mr-2 h-4 w-4" /> Download Certificate
+              {passed && certId && (
+                <Button
+                  disabled={downloading}
+                  onClick={async () => {
+                    if (!user) return;
+                    setDownloading(true);
+                    try {
+                      await downloadCertificate(certId, user.id);
+                    } catch { alert("Download failed. Please try again."); }
+                    finally { setDownloading(false); }
+                  }}
+                >
+                  {downloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                  {downloading ? "Downloading..." : "Download Certificate"}
                 </Button>
               )}
               {passed && generating && (
@@ -99,7 +112,7 @@ const QuizResultsPage = () => {
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating Certificate...
                 </Button>
               )}
-              {passed && !generating && !pdfUrl && (
+              {passed && !generating && !certId && (
                 <Button asChild>
                   <Link to="/employee/certificates">
                     <Award className="mr-2 h-4 w-4" /> View Certificates
