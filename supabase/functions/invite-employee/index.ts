@@ -116,24 +116,40 @@ Deno.serve(async (req) => {
 
       if (resendError) {
         if (resendError.message?.includes("already been registered")) {
-          // User already exists in auth — generate a magic link instead
-          const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-            type: "magiclink",
-            email,
-            options: {
-              redirectTo: `${req.headers.get("origin") || supabaseUrl}/invite/accept`,
+          // Delete old auth user and re-invite fresh so an email is actually sent
+          const { data: usersData } = await supabaseAdmin.auth.admin.listUsers();
+          const existingAuthUser = usersData?.users?.find(u => u.email === email);
+          
+          if (existingAuthUser) {
+            await supabaseAdmin.auth.admin.deleteUser(existingAuthUser.id);
+          }
+
+          const { error: reInviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+            data: {
+              full_name: fullName,
+              company_name: orgName,
+              invited_by: user.id,
+              organization_id: profile.organization_id,
+              role: "employee",
             },
+            redirectTo: `${req.headers.get("origin") || supabaseUrl}/invite/accept`,
           });
 
-          if (linkError) {
-            console.error("Generate link error:", linkError);
-            return new Response(JSON.stringify({ error: "Failed to resend invitation: " + linkError.message }), {
+          if (reInviteError) {
+            console.error("Re-invite error:", reInviteError);
+            return new Response(JSON.stringify({ error: "Failed to resend invitation: " + reInviteError.message }), {
               status: 400,
               headers: { ...corsHeaders, "Content-Type": "application/json" },
             });
           }
 
-          return new Response(JSON.stringify({ employee: existing, message: "Invitation resent via magic link." }), {
+          // Reset employee to pending
+          await supabaseAdmin
+            .from("employees")
+            .update({ user_id: null, status: "pending", joined_at: null })
+            .eq("id", existing.id);
+
+          return new Response(JSON.stringify({ employee: existing, message: "Invitation resent." }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
@@ -164,34 +180,41 @@ Deno.serve(async (req) => {
     });
 
     if (inviteError) {
-      // If user already registered, still allow creating the employee record
       if (inviteError.message?.includes("already been registered")) {
-        // Look up the existing auth user
+        // Delete the old auth user so we can re-invite fresh
         const { data: usersData } = await supabaseAdmin.auth.admin.listUsers();
         const existingAuthUser = usersData?.users?.find(u => u.email === email);
         
-        if (existing) {
-          // Resend case — just return success
-          return new Response(JSON.stringify({ employee: existing, message: "User already exists, invitation noted." }), {
+        if (existingAuthUser) {
+          await supabaseAdmin.auth.admin.deleteUser(existingAuthUser.id);
+        }
+
+        // Now re-invite fresh
+        const { data: reInviteData, error: reInviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+          data: {
+            full_name: fullName,
+            company_name: orgName,
+            invited_by: user.id,
+            organization_id: profile.organization_id,
+            role: "employee",
+          },
+          redirectTo: `${req.headers.get("origin") || supabaseUrl}/invite/accept`,
+        });
+
+        if (reInviteError) {
+          console.error("Re-invite error:", reInviteError);
+          return new Response(JSON.stringify({ error: reInviteError.message }), {
+            status: 400,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
-        
-        // Send a magic link so the user must re-authenticate
-        await supabaseAdmin.auth.admin.generateLink({
-          type: "magiclink",
-          email,
-          options: {
-            redirectTo: `${req.headers.get("origin") || supabaseUrl}/invite/accept`,
-          },
-        });
 
-        // Create employee record as PENDING — they must click the link to activate
+        // Create employee record as PENDING
         const { data: employee, error: empError } = await supabaseAdmin
           .from("employees")
           .insert({
             organization_id: profile.organization_id,
-            user_id: null,
+            user_id: reInviteData.user?.id || null,
             full_name: fullName,
             email,
             department: department || null,
