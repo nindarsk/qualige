@@ -213,8 +213,8 @@ Deno.serve(async (req) => {
         const { data: employee, error: empError } = await supabaseAdmin
           .from("employees")
           .insert({
-            organization_id: profile.organization_id,
-            user_id: reInviteData.user?.id || null,
+        organization_id: profile.organization_id,
+            user_id: null,
             full_name: fullName,
             email,
             department: department || null,
@@ -246,8 +246,8 @@ Deno.serve(async (req) => {
     const { data: employee, error: empError } = await supabaseAdmin
       .from("employees")
       .insert({
-        organization_id: profile.organization_id,
-        user_id: inviteData.user?.id || null,
+      organization_id: profile.organization_id,
+        user_id: null,
         full_name: fullName,
         email,
         department: department || null,
