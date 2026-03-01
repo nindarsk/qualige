@@ -98,10 +98,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    // If resending for an existing employee, just re-invite and return
+    // If resending for an existing employee, generate a new magic link and return
     if (existing && resend) {
       const orgName = org?.name || "your organization";
-      await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+      
+      // Try inviteUserByEmail first; if user already registered, use generateLink as fallback
+      const { error: resendError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
         data: {
           full_name: fullName,
           company_name: orgName,
@@ -109,8 +111,40 @@ Deno.serve(async (req) => {
           organization_id: profile.organization_id,
           role: "employee",
         },
-      redirectTo: `${req.headers.get("origin") || supabaseUrl}/invite/accept`,
+        redirectTo: `${req.headers.get("origin") || supabaseUrl}/invite/accept`,
       });
+
+      if (resendError) {
+        if (resendError.message?.includes("already been registered")) {
+          // User already exists in auth — generate a magic link instead
+          const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+            type: "magiclink",
+            email,
+            options: {
+              redirectTo: `${req.headers.get("origin") || supabaseUrl}/invite/accept`,
+            },
+          });
+
+          if (linkError) {
+            console.error("Generate link error:", linkError);
+            return new Response(JSON.stringify({ error: "Failed to resend invitation: " + linkError.message }), {
+              status: 400,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+
+          return new Response(JSON.stringify({ employee: existing, message: "Invitation resent via magic link." }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        console.error("Resend invite error:", resendError);
+        return new Response(JSON.stringify({ error: "Failed to resend invitation: " + resendError.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       return new Response(JSON.stringify({ employee: existing, message: "Invitation resent." }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
