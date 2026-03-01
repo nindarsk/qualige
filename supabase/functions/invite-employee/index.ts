@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
           organization_id: profile.organization_id,
           role: "employee",
         },
-        redirectTo: `${req.headers.get("origin") || supabaseUrl}`,
+      redirectTo: `${req.headers.get("origin") || supabaseUrl}/invite/accept`,
       });
       return new Response(JSON.stringify({ employee: existing, message: "Invitation resent." }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
         organization_id: profile.organization_id,
         role: "employee",
       },
-      redirectTo: `${req.headers.get("origin") || supabaseUrl}`,
+      redirectTo: `${req.headers.get("origin") || supabaseUrl}/invite/accept`,
     });
 
     if (inviteError) {

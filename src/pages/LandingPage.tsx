@@ -1,6 +1,7 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { BookOpen, ShieldCheck, Award, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 import heroBg from "@/assets/hero-bg.jpg";
 
 const features = [
@@ -22,6 +23,14 @@ const features = [
 ];
 
 const LandingPage = () => {
+  const { session, role, loading } = useAuth();
+
+  if (!loading && session && role) {
+    if (role === "employee") return <Navigate to="/employee" replace />;
+    if (role === "hr_admin") return <Navigate to="/hr" replace />;
+    if (role === "super_admin") return <Navigate to="/admin" replace />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Nav */}
