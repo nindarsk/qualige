@@ -15,7 +15,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, CreditCard } from "lucide-react";
 
 const navItems = [
   { title: "Dashboard", path: "/hr", icon: LayoutDashboard },
@@ -23,6 +23,7 @@ const navItems = [
   { title: "Courses", path: "/hr/courses", icon: BookOpen },
   { title: "Employees", path: "/hr/employees", icon: Users },
   { title: "Reports", path: "/hr/reports", icon: BarChart3 },
+  { title: "Billing", path: "/hr/billing", icon: CreditCard },
   { title: "Settings", path: "/hr/settings", icon: Settings },
 ];
 

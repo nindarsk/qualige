@@ -29,6 +29,8 @@ import CourseLearnPage from "./pages/dashboards/employee/CourseLearnPage";
 import QuizPage from "./pages/dashboards/employee/QuizPage";
 import QuizResultsPage from "./pages/dashboards/employee/QuizResultsPage";
 import NotFound from "./pages/NotFound";
+import PricingPage from "./pages/PricingPage";
+import BillingPage from "./pages/dashboards/hr/BillingPage";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +50,7 @@ const App = () => (
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/invite/accept" element={<InviteAcceptPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
 
             {/* HR Admin */}
             <Route
@@ -64,6 +67,7 @@ const App = () => (
               <Route path="courses/:id/review" element={<CourseReviewPage />} />
               <Route path="employees" element={<EmployeesPage />} />
               <Route path="reports" element={<ReportsPage />} />
+              <Route path="billing" element={<BillingPage />} />
               <Route path="settings" element={<DashboardPlaceholder title="Settings" description="Organization settings and configuration." />} />
             </Route>
 
