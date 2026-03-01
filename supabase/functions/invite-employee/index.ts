@@ -98,6 +98,24 @@ Deno.serve(async (req) => {
       });
     }
 
+    // If resending for an existing employee, just re-invite and return
+    if (existing && resend) {
+      const orgName = org?.name || "your organization";
+      await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+        data: {
+          full_name: fullName,
+          company_name: orgName,
+          invited_by: user.id,
+          organization_id: profile.organization_id,
+          role: "employee",
+        },
+        redirectTo: `${req.headers.get("origin") || supabaseUrl}`,
+      });
+      return new Response(JSON.stringify({ employee: existing, message: "Invitation resent." }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Invite via Supabase Auth
     const orgName = org?.name || "your organization";
     const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
