@@ -166,87 +166,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Invite via Supabase Auth
+    // Create employee record FIRST so the handle_new_user trigger can find it
     const orgName = org?.name || "your organization";
-    const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      data: {
-        full_name: fullName,
-        company_name: orgName,
-        invited_by: user.id,
-        organization_id: profile.organization_id,
-        role: "employee",
-      },
-      redirectTo: "https://qualige.lovable.app/invite/accept",
-    });
-
-    if (inviteError) {
-      if (inviteError.message?.includes("already been registered")) {
-        // Delete the old auth user so we can re-invite fresh
-        const { data: usersData } = await supabaseAdmin.auth.admin.listUsers();
-        const existingAuthUser = usersData?.users?.find(u => u.email === email);
-        
-        if (existingAuthUser) {
-          await supabaseAdmin.auth.admin.deleteUser(existingAuthUser.id);
-        }
-
-        // Now re-invite fresh
-        const { data: reInviteData, error: reInviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-          data: {
-            full_name: fullName,
-            company_name: orgName,
-            invited_by: user.id,
-            organization_id: profile.organization_id,
-            role: "employee",
-          },
-          redirectTo: "https://qualige.lovable.app/invite/accept",
-        });
-
-        if (reInviteError) {
-          console.error("Re-invite error:", reInviteError);
-          return new Response(JSON.stringify({ error: reInviteError.message }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-
-        // Create employee record as PENDING
-        const { data: employee, error: empError } = await supabaseAdmin
-          .from("employees")
-          .insert({
-        organization_id: profile.organization_id,
-            user_id: null,
-            full_name: fullName,
-            email,
-            department: department || null,
-            status: "pending",
-          })
-          .select()
-          .single();
-
-        if (empError) {
-          return new Response(JSON.stringify({ error: empError.message }), {
-            status: 500,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-
-        return new Response(JSON.stringify({ employee }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      console.error("Invite error:", inviteError);
-      return new Response(JSON.stringify({ error: inviteError.message }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Create employee record
     const { data: employee, error: empError } = await supabaseAdmin
       .from("employees")
       .insert({
-      organization_id: profile.organization_id,
+        organization_id: profile.organization_id,
         user_id: null,
         full_name: fullName,
         email,
@@ -260,6 +185,62 @@ Deno.serve(async (req) => {
       console.error("Employee insert error:", empError);
       return new Response(JSON.stringify({ error: empError.message }), {
         status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Now invite via Supabase Auth — the trigger will find the employee record
+    const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+      data: {
+        full_name: fullName,
+        company_name: orgName,
+        invited_by: user.id,
+        organization_id: profile.organization_id,
+        role: "employee",
+      },
+      redirectTo: "https://qualige.lovable.app/invite/accept",
+    });
+
+    if (inviteError) {
+      if (inviteError.message?.includes("already been registered")) {
+        const { data: usersData } = await supabaseAdmin.auth.admin.listUsers();
+        const existingAuthUser = usersData?.users?.find(u => u.email === email);
+        
+        if (existingAuthUser) {
+          await supabaseAdmin.auth.admin.deleteUser(existingAuthUser.id);
+        }
+
+        const { error: reInviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+          data: {
+            full_name: fullName,
+            company_name: orgName,
+            invited_by: user.id,
+            organization_id: profile.organization_id,
+            role: "employee",
+          },
+          redirectTo: "https://qualige.lovable.app/invite/accept",
+        });
+
+        if (reInviteError) {
+          console.error("Re-invite error:", reInviteError);
+          // Clean up the employee record we created
+          await supabaseAdmin.from("employees").delete().eq("id", employee.id);
+          return new Response(JSON.stringify({ error: reInviteError.message }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        return new Response(JSON.stringify({ employee }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      console.error("Invite error:", inviteError);
+      // Clean up the employee record we created
+      await supabaseAdmin.from("employees").delete().eq("id", employee.id);
+      return new Response(JSON.stringify({ error: inviteError.message }), {
+        status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
