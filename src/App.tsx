@@ -17,6 +17,7 @@ import HRDashboard from "./pages/dashboards/HRDashboard";
 import EmployeeDashboard from "./pages/dashboards/EmployeeDashboard";
 import SuperAdminDashboard from "./pages/dashboards/SuperAdminDashboard";
 import DashboardPlaceholder from "./components/DashboardPlaceholder";
+import ReportsPage from "./pages/dashboards/hr/ReportsPage";
 import UploadCoursePage from "./pages/dashboards/hr/UploadCoursePage";
 import CoursesListPage from "./pages/dashboards/hr/CoursesListPage";
 import CourseReviewPage from "./pages/dashboards/hr/CourseReviewPage";
@@ -62,7 +63,7 @@ const App = () => (
               <Route path="courses" element={<CoursesListPage />} />
               <Route path="courses/:id/review" element={<CourseReviewPage />} />
               <Route path="employees" element={<EmployeesPage />} />
-              <Route path="reports" element={<DashboardPlaceholder title="Reports" description="View compliance reports and training analytics." />} />
+              <Route path="reports" element={<ReportsPage />} />
               <Route path="settings" element={<DashboardPlaceholder title="Settings" description="Organization settings and configuration." />} />
             </Route>
 
