@@ -191,7 +191,10 @@ const CourseReviewPage = () => {
         description: publish ? "Course is now available for assignment." : "Your changes have been saved.",
       });
 
-      if (publish) navigate("/hr/courses");
+      if (publish) {
+        logAuditEvent({ action: "COURSE_PUBLISHED", details: `Course: ${course.title}` });
+        navigate("/hr/courses");
+      }
     } catch (err: any) {
       toast({ title: "Save failed", description: err.message, variant: "destructive" });
     } finally {
