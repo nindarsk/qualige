@@ -11,6 +11,7 @@ import { BookOpen, Loader2, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { isPasswordLeaked } from "@/lib/check-leaked-password";
 
 const registerSchema = z
   .object({
