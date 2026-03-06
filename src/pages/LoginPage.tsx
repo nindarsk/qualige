@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BookOpen, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { logAuditEvent } from "@/lib/audit-log";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
