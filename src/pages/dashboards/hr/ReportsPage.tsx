@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Loader2, Users, Award, BarChart3, CheckCircle, FileDown, FileSpreadsheet, Search, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { downloadCertificate } from "@/lib/download-certificate";
 import jsPDF from "jspdf";
-import * as XLSX from "xlsx";
+
 
 interface ReportRow {
   employeeName: string;
