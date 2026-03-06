@@ -131,6 +131,7 @@ const EmployeesPage = () => {
       if (data?.error) throw new Error(data.error);
 
       toast({ title: "Invitation sent!", description: `${inviteForm.fullName} has been invited.` });
+      logAuditEvent({ action: "EMPLOYEE_INVITED", details: `Invited: ${inviteForm.email}` });
       setInviteForm({ fullName: "", email: "", department: "" });
       setInviteOpen(false);
       fetchEmployees();
