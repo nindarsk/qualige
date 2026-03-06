@@ -63,14 +63,15 @@ const LandingPage = () => {
             <span className="text-xl font-bold text-primary">Quali</span>
           </Link>
           <div className="flex items-center gap-3">
+            <LanguageSwitcher />
             <Button variant="ghost" asChild>
-              <Link to="/pricing">Pricing</Link>
+              <Link to="/pricing">{t("nav.pricing")}</Link>
             </Button>
             <Button variant="ghost" asChild>
-              <Link to="/login">Sign In</Link>
+              <Link to="/login">{t("nav.signIn")}</Link>
             </Button>
             <Button asChild className="gradient-gold border-0 text-accent-foreground hover:opacity-90">
-              <Link to="/register">Get Started</Link>
+              <Link to="/register">{t("nav.getStarted")}</Link>
             </Button>
           </div>
         </div>
