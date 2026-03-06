@@ -1,4 +1,4 @@
-import { DashboardPlaceholder } from "@/components/DashboardPlaceholder";
+import DashboardPlaceholder from "@/components/DashboardPlaceholder";
 
 const AdminSettingsPage = () => (
   <DashboardPlaceholder
