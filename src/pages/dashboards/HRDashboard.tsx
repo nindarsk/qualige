@@ -16,7 +16,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { PlusCircle, CreditCard } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
+
 
 const HRDashboard = () => {
   const { organizationName, fullName, signOut } = useAuth();
@@ -102,7 +102,7 @@ const HRDashboard = () => {
             <h2 className="text-sm font-semibold text-foreground">{organizationName || "Organization"}</h2>
           </div>
           <div className="flex items-center gap-3">
-            <LanguageSwitcher />
+            
             <span className="hidden text-sm text-muted-foreground sm:block">{fullName}</span>
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-primary text-xs text-primary-foreground">{initials}</AvatarFallback>
