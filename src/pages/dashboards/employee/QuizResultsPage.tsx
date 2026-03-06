@@ -100,6 +100,7 @@ const QuizResultsPage = () => {
                     setDownloading(true);
                     try {
                       await downloadCertificate(certId, user.id);
+                      logAuditEvent({ action: "CERTIFICATE_DOWNLOADED", details: `Certificate: ${certId}` });
                     } catch { alert("Download failed. Please try again."); }
                     finally { setDownloading(false); }
                   }}
