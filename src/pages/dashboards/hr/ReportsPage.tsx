@@ -292,36 +292,37 @@ const ReportsPage = () => {
     }
   };
 
-  // Excel Export
+  // CSV Export (replaces xlsx to eliminate vulnerability)
   const exportExcel = async () => {
     setExporting("xlsx");
     try {
-      const wsData = [
-        ["Training Compliance Report"],
-        [organizationName || "Organization"],
-        [`Generated: ${new Date().toLocaleDateString()}`],
-        [],
-        ["Summary"],
-        [`Trained this month: ${stats.trainedThisMonth}`, `Certificates: ${stats.certificatesIssued}`, `Avg Score: ${stats.avgQuizScore}%`, `Compliance: ${stats.complianceRate}%`],
-        [],
-        ["Employee", "Department", "Course", "Assigned Date", "Completion Date", "Quiz Score", "Status", "Certificate ID"],
-        ...filteredRows.map((r) => [
-          r.employeeName,
-          r.department,
-          r.courseTitle,
-          r.assignedDate,
-          r.completionDate || "—",
-          r.quizScore !== null ? `${Math.round(r.quizScore)}%` : "—",
-          r.status,
-          r.certificateId || "—",
-        ]),
-      ];
+      const escCsv = (val: string) => {
+        if (val.includes(",") || val.includes('"') || val.includes("\n")) {
+          return `"${val.replace(/"/g, '""')}"`;
+        }
+        return val;
+      };
 
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.aoa_to_sheet(wsData);
-      ws["!cols"] = [{ wch: 25 }, { wch: 18 }, { wch: 30 }, { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 14 }, { wch: 22 }];
-      XLSX.utils.book_append_sheet(wb, ws, "Compliance Report");
-      XLSX.writeFile(wb, `Quali-Compliance-Report-${new Date().toISOString().split("T")[0]}.xlsx`);
+      const headers = ["Employee", "Department", "Course", "Assigned Date", "Completion Date", "Quiz Score", "Status", "Certificate ID"];
+      const rows = filteredRows.map((r) => [
+        r.employeeName,
+        r.department,
+        r.courseTitle,
+        r.assignedDate,
+        r.completionDate || "",
+        r.quizScore !== null ? `${Math.round(r.quizScore)}%` : "",
+        r.status,
+        r.certificateId || "",
+      ]);
+
+      const csvContent = [headers, ...rows].map(row => row.map(escCsv).join(",")).join("\n");
+      const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Quali-Compliance-Report-${new Date().toISOString().split("T")[0]}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
     } finally {
       setExporting(null);
     }
