@@ -5,45 +5,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
-const features = [
-  {
-    icon: Sparkles,
-    title: "AI Course Generation",
-    description: "Upload any PDF, Word, or PowerPoint and get a complete course with quiz in under 2 minutes.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Compliance Tracking",
-    description: "Full audit trail of every course completion, quiz score, and certificate for regulatory reporting.",
-  },
-  {
-    icon: Award,
-    title: "Instant Certificates",
-    description: "Automatically generated certificates with unique IDs issued immediately upon passing.",
-  },
-];
-
-const steps = [
-  {
-    icon: Upload,
-    step: "01",
-    title: "Upload Your Document",
-    description: "Upload any policy, manual, or regulation document in PDF, Word, or PowerPoint format.",
-  },
-  {
-    icon: Brain,
-    step: "02",
-    title: "AI Generates Your Course",
-    description: "Our AI analyzes the content and creates a structured training course with interactive quiz questions.",
-  },
-  {
-    icon: Users,
-    step: "03",
-    title: "Assign & Track Completion",
-    description: "Assign courses to employees, monitor progress in real-time, and generate compliance reports.",
-  },
-];
-
 const LandingPage = () => {
   const { session, role, loading } = useAuth();
   const { t } = useTranslation();
@@ -54,9 +15,20 @@ const LandingPage = () => {
     if (role === "super_admin") return <Navigate to="/admin" replace />;
   }
 
+  const features = [
+    { icon: Sparkles, title: t("landing.features.aiCourseGen"), description: t("landing.features.aiCourseGenDesc") },
+    { icon: ShieldCheck, title: t("landing.features.complianceTracking"), description: t("landing.features.complianceTrackingDesc") },
+    { icon: Award, title: t("landing.features.instantCertificates"), description: t("landing.features.instantCertificatesDesc") },
+  ];
+
+  const steps = [
+    { icon: Upload, step: "01", title: t("landing.steps.uploadDoc"), description: t("landing.steps.uploadDocDesc") },
+    { icon: Brain, step: "02", title: t("landing.steps.aiGenerates"), description: t("landing.steps.aiGeneratesDesc") },
+    { icon: Users, step: "03", title: t("landing.steps.assignTrack"), description: t("landing.steps.assignTrackDesc") },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Nav */}
       <nav className="fixed top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md">
         <div className="container flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
@@ -78,79 +50,68 @@ const LandingPage = () => {
         </div>
       </nav>
 
-      {/* Hero */}
       <section className="relative overflow-hidden pt-16">
         <div className="absolute inset-0 gradient-navy opacity-95" />
         <div className="relative container flex min-h-[600px] flex-col items-center justify-center py-24 text-center">
           <div className="animate-fade-in max-w-3xl">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-1.5 text-sm text-accent">
               <Sparkles className="h-4 w-4" />
-              AI-Powered Learning Platform
+              {t("landing.aiPoweredPlatform")}
             </div>
             <h1 className="mb-6 text-4xl font-bold leading-tight tracking-tight text-primary-foreground md:text-5xl lg:text-6xl">
-              Turn Any Document Into a Training Course in Minutes
+              {t("landing.heroTitle")}
             </h1>
             <p className="mb-8 text-lg text-primary-foreground/80 md:text-xl">
-              AI-powered Learning Management System built for financial institutions in Georgia. Simplify compliance training, accelerate onboarding, and certify your workforce.
+              {t("landing.heroSubtitle")}
             </p>
             <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Button size="lg" asChild className="gradient-gold border-0 px-8 text-lg text-accent-foreground hover:opacity-90">
                 <Link to="/register">
-                  Request a Demo
+                  {t("landing.requestDemo")}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" asChild className="border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10">
-                <a href="#features">Learn More</a>
+                <a href="#features">{t("landing.learnMore")}</a>
               </Button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features */}
       <section id="features" className="py-24">
         <div className="container">
           <div className="mb-16 text-center">
             <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
-              Everything Your Institution Needs
+              {t("landing.everythingYouNeed")}
             </h2>
             <p className="mx-auto max-w-2xl text-muted-foreground">
-              From AI-generated courses to compliance tracking and certification — Quali handles it all.
+              {t("landing.everythingDesc")}
             </p>
           </div>
           <div className="grid gap-8 md:grid-cols-3">
             {features.map((feature, i) => (
               <div
-                key={feature.title}
+                key={i}
                 className="group rounded-xl border border-border bg-card p-8 transition-all hover:border-accent/50 hover:shadow-lg"
                 style={{ animationDelay: `${i * 150}ms` }}
               >
                 <div className="mb-5 inline-flex rounded-lg bg-accent/10 p-3">
                   <feature.icon className="h-6 w-6 text-accent" />
                 </div>
-                <h3 className="mb-3 text-xl font-semibold text-card-foreground">
-                  {feature.title}
-                </h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  {feature.description}
-                </p>
+                <h3 className="mb-3 text-xl font-semibold text-card-foreground">{feature.title}</h3>
+                <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
       <section className="border-t border-border bg-muted/30 py-24">
         <div className="container">
           <div className="mb-16 text-center">
-            <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
-              How It Works
-            </h2>
-            <p className="mx-auto max-w-2xl text-muted-foreground">
-              Three simple steps to transform your compliance training.
-            </p>
+            <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">{t("landing.howItWorks")}</h2>
+            <p className="mx-auto max-w-2xl text-muted-foreground">{t("landing.howItWorksDesc")}</p>
           </div>
           <div className="grid gap-8 md:grid-cols-3">
             {steps.map((step, i) => (
@@ -174,34 +135,28 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* CTA */}
       <section className="gradient-navy py-20">
         <div className="container text-center">
-          <h2 className="mb-4 text-3xl font-bold text-primary-foreground md:text-4xl">
-            Ready to Transform Your Training?
-          </h2>
-          <p className="mx-auto mb-8 max-w-xl text-primary-foreground/70">
-            Join forward-thinking financial institutions already using Quali to streamline compliance and employee development.
-          </p>
+          <h2 className="mb-4 text-3xl font-bold text-primary-foreground md:text-4xl">{t("landing.readyToTransform")}</h2>
+          <p className="mx-auto mb-8 max-w-xl text-primary-foreground/70">{t("landing.readyToTransformDesc")}</p>
           <Button size="lg" asChild className="gradient-gold border-0 px-8 text-lg text-accent-foreground hover:opacity-90">
             <Link to="/register">
-              Start Free Trial
+              {t("landing.startFreeTrial")}
               <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
           </Button>
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="border-t border-border py-8">
         <div className="container flex flex-col items-center justify-between gap-4 text-sm text-muted-foreground sm:flex-row">
           <div className="flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-accent" />
             <span className="font-semibold text-foreground">Quali</span>
           </div>
-          <p className="text-center">Built for Georgian financial institutions</p>
+          <p className="text-center">{t("landing.builtForGeorgian")}</p>
           <div className="flex items-center gap-4">
-            <Link to="/login" className="hover:text-foreground transition-colors">Login</Link>
+            <Link to="/login" className="hover:text-foreground transition-colors">{t("nav.signIn")}</Link>
             <p>© 2026 Quali. All rights reserved.</p>
           </div>
         </div>

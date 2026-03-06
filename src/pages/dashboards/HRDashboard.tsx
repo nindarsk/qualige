@@ -14,20 +14,9 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-
 import { PlusCircle, CreditCard } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-
-const navItems = [
-  { title: "Dashboard", path: "/hr", icon: LayoutDashboard },
-  { title: "Create Course", path: "/hr/upload", icon: PlusCircle },
-  { title: "Courses", path: "/hr/courses", icon: BookOpen },
-  { title: "Employees", path: "/hr/employees", icon: Users },
-  { title: "Reports", path: "/hr/reports", icon: BarChart3 },
-  { title: "Billing", path: "/hr/billing", icon: CreditCard },
-  { title: "Settings", path: "/hr/settings", icon: Settings },
-];
 
 const HRDashboard = () => {
   const { organizationName, fullName, signOut } = useAuth();
@@ -35,13 +24,22 @@ const HRDashboard = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const navItems = [
+    { title: t("nav.dashboard"), path: "/hr", icon: LayoutDashboard },
+    { title: t("nav.createCourse"), path: "/hr/upload", icon: PlusCircle },
+    { title: t("nav.courses"), path: "/hr/courses", icon: BookOpen },
+    { title: t("nav.employees"), path: "/hr/employees", icon: Users },
+    { title: t("nav.reports"), path: "/hr/reports", icon: BarChart3 },
+    { title: t("nav.billing"), path: "/hr/billing", icon: CreditCard },
+    { title: t("nav.settings"), path: "/hr/settings", icon: Settings },
+  ];
+
   const initials = fullName
     ? fullName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
     : "HR";
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Sidebar */}
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex w-64 flex-col gradient-navy transition-transform duration-300 lg:static lg:translate-x-0",
@@ -86,19 +84,16 @@ const HRDashboard = () => {
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
           >
             <LogOut className="h-5 w-5" />
-            Sign Out
+            {t("nav.signOut")}
           </button>
         </div>
       </aside>
 
-      {/* Overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 bg-foreground/20 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* Main */}
       <div className="flex flex-1 flex-col">
-        {/* Top bar */}
         <header className="flex h-16 items-center justify-between border-b border-border bg-card px-6">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(true)}>
@@ -115,7 +110,6 @@ const HRDashboard = () => {
           </div>
         </header>
 
-        {/* Content */}
         <main className="flex-1 p-6">
           <Outlet />
         </main>

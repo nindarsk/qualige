@@ -8,16 +8,17 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-const navItems = [
-  { title: "My Courses", path: "/employee", icon: BookOpen },
-  { title: "My Certificates", path: "/employee/certificates", icon: Award },
-  { title: "Profile", path: "/employee/profile", icon: UserCircle },
-];
-
 const EmployeeDashboard = () => {
   const { fullName, signOut } = useAuth();
+  const { t } = useTranslation();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const navItems = [
+    { title: t("nav.myCourses"), path: "/employee", icon: BookOpen },
+    { title: t("nav.myCertificates"), path: "/employee/certificates", icon: Award },
+    { title: t("nav.profile"), path: "/employee/profile", icon: UserCircle },
+  ];
 
   const initials = fullName
     ? fullName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
@@ -25,7 +26,6 @@ const EmployeeDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Top navigation */}
       <header className="border-b border-border bg-card">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-6">
@@ -33,8 +33,6 @@ const EmployeeDashboard = () => {
               <BookOpen className="h-6 w-6 text-accent" />
               <span className="text-lg font-bold text-primary">Quali</span>
             </Link>
-
-            {/* Desktop nav */}
             <nav className="hidden items-center gap-1 md:flex">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.path;
@@ -70,7 +68,6 @@ const EmployeeDashboard = () => {
           </div>
         </div>
 
-        {/* Mobile nav */}
         {menuOpen && (
           <nav className="border-t border-border px-4 py-2 md:hidden">
             {navItems.map((item) => {
