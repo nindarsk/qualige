@@ -65,6 +65,8 @@
     "enterCredentials": "Enter your credentials to access your account",
     "loginFailed": "Login failed",
     "registrationFailed": "Registration failed",
+    "leakedPasswordTitle": "Compromised Password",
+    "leakedPasswordDesc": "This password has been found in a data breach. Please choose a different password.",
     "registrationSuccess": "Registration successful!",
     "checkEmailVerify": "Please check your email to verify your account.",
     "registerButton": "Register Organization",

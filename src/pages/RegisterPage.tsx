@@ -11,6 +11,7 @@ import { BookOpen, Loader2, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { isPasswordLeaked } from "@/lib/check-leaked-password";
 
 const registerSchema = z
   .object({
@@ -67,6 +68,18 @@ const RegisterPage = () => {
   const onSubmit = async (data: RegisterForm) => {
     setLoading(true);
     try {
+      // Check if password has been found in known data breaches
+      const leaked = await isPasswordLeaked(data.password);
+      if (leaked) {
+        toast({
+          title: t("auth.leakedPasswordTitle", "Compromised Password"),
+          description: t("auth.leakedPasswordDesc", "This password has been found in a data breach. Please choose a different password."),
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       const { error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
