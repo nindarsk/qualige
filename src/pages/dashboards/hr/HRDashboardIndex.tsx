@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Users, BookOpen, Award, BarChart3, Trophy } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface DashStats {
   totalEmployees: number;
@@ -28,6 +29,7 @@ interface LeaderEntry {
 
 const HRDashboardIndex = () => {
   const { organizationId } = useAuth();
+  const { t } = useTranslation();
   const [stats, setStats] = useState<DashStats>({ totalEmployees: 0, coursesPublished: 0, completionsThisMonth: 0, avgQuizScore: 0 });
   const [activities, setActivities] = useState<Activity[]>([]);
   const [leaders, setLeaders] = useState<LeaderEntry[]>([]);
@@ -39,7 +41,6 @@ const HRDashboardIndex = () => {
 
   const fetchDashboardData = async () => {
     try {
-      // Stats
       const [empRes, courseRes, assignRes, quizRes] = await Promise.all([
         supabase.from("employees").select("id", { count: "exact", head: true }),
         supabase.from("courses").select("id", { count: "exact", head: true }).eq("status", "published"),
@@ -57,7 +58,6 @@ const HRDashboardIndex = () => {
         avgQuizScore: Math.round(avgScore),
       });
 
-      // Recent activity from quiz attempts
       const { data: recentAttempts } = await supabase
         .from("quiz_attempts")
         .select("id, score, passed, attempted_at, employee_id, course_id")
@@ -83,7 +83,6 @@ const HRDashboardIndex = () => {
         setActivities(enrichedActivities);
       }
 
-      // Leaderboard
       const { data: completedAssignments } = await supabase
         .from("course_assignments")
         .select("employee_id")
@@ -123,17 +122,16 @@ const HRDashboardIndex = () => {
   }
 
   const statCards = [
-    { title: "Total Employees", value: stats.totalEmployees, icon: Users, color: "text-primary" },
-    { title: "Courses Published", value: stats.coursesPublished, icon: BookOpen, color: "text-accent" },
-    { title: "Completions", value: stats.completionsThisMonth, icon: Award, color: "text-primary" },
-    { title: "Avg Quiz Score", value: `${stats.avgQuizScore}%`, icon: BarChart3, color: "text-accent" },
+    { title: t("dashboard.totalEmployees"), value: stats.totalEmployees, icon: Users, color: "text-primary" },
+    { title: t("dashboard.coursesPublished"), value: stats.coursesPublished, icon: BookOpen, color: "text-accent" },
+    { title: t("dashboard.completions"), value: stats.completionsThisMonth, icon: Award, color: "text-primary" },
+    { title: t("dashboard.avgQuizScore"), value: `${stats.avgQuizScore}%`, icon: BarChart3, color: "text-accent" },
   ];
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+      <h1 className="text-2xl font-bold text-foreground">{t("dashboard.title")}</h1>
 
-      {/* Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((s) => (
           <Card key={s.title}>
@@ -151,22 +149,21 @@ const HRDashboardIndex = () => {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Recent Activity */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-base">Recent Activity</CardTitle>
+            <CardTitle className="text-base">{t("dashboard.recentActivity")}</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             {activities.length === 0 ? (
-              <p className="p-6 text-center text-sm text-muted-foreground">No activity yet.</p>
+              <p className="p-6 text-center text-sm text-muted-foreground">{t("dashboard.noActivityYet")}</p>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Employee</TableHead>
-                    <TableHead>Course</TableHead>
-                    <TableHead>Action</TableHead>
-                    <TableHead>Date</TableHead>
+                    <TableHead>{t("dashboard.employee")}</TableHead>
+                    <TableHead>{t("dashboard.course")}</TableHead>
+                    <TableHead>{t("dashboard.action")}</TableHead>
+                    <TableHead>{t("dashboard.date")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -176,7 +173,7 @@ const HRDashboardIndex = () => {
                       <TableCell className="text-muted-foreground">{a.course_title}</TableCell>
                       <TableCell>
                         <Badge variant={a.action === "Completed" ? "default" : "destructive"}>
-                          {a.action}
+                          {a.action === "Completed" ? t("dashboard.completed") : t("dashboard.failed")}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground">{a.date}</TableCell>
@@ -188,16 +185,15 @@ const HRDashboardIndex = () => {
           </CardContent>
         </Card>
 
-        {/* Leaderboard */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Trophy className="h-4 w-4 text-accent" /> Leaderboard
+              <Trophy className="h-4 w-4 text-accent" /> {t("dashboard.leaderboard")}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {leaders.length === 0 ? (
-              <p className="text-center text-sm text-muted-foreground">No completions yet.</p>
+              <p className="text-center text-sm text-muted-foreground">{t("dashboard.noCompletionsYet")}</p>
             ) : (
               <div className="space-y-3">
                 {leaders.map((l, idx) => (
@@ -208,7 +204,7 @@ const HRDashboardIndex = () => {
                       </span>
                       <span className="text-sm font-medium text-foreground">{l.name}</span>
                     </div>
-                    <Badge variant="outline">{l.completed} courses</Badge>
+                    <Badge variant="outline">{l.completed} {t("dashboard.courses")}</Badge>
                   </div>
                 ))}
               </div>

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { BookOpen, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { logAuditEvent } from "@/lib/audit-log";
+import { useTranslation } from "react-i18next";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -14,6 +15,7 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +25,6 @@ const LoginPage = () => {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
 
-      // Fetch role to redirect
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: roleData } = await supabase
@@ -32,7 +33,6 @@ const LoginPage = () => {
           .eq("user_id", user.id)
           .single();
 
-        // Log audit event
         logAuditEvent({ action: "USER_LOGIN", details: "User logged in" });
 
         if (roleData?.role === "hr_admin") navigate("/hr");
@@ -42,7 +42,7 @@ const LoginPage = () => {
       }
     } catch (error: any) {
       toast({
-        title: "Login failed",
+        title: t("auth.loginFailed"),
         description: error.message,
         variant: "destructive",
       });
@@ -60,10 +60,10 @@ const LoginPage = () => {
             <span className="text-2xl font-bold text-primary-foreground">Quali</span>
           </div>
           <h2 className="mb-4 text-3xl font-bold text-primary-foreground">
-            Welcome back
+            {t("auth.welcomeBack")}
           </h2>
           <p className="text-primary-foreground/70">
-            Sign in to access your organization's learning management system.
+            {t("auth.signInToAccess")}
           </p>
         </div>
       </div>
@@ -76,33 +76,33 @@ const LoginPage = () => {
               <span className="text-xl font-bold text-primary">Quali</span>
             </Link>
           </div>
-          <h1 className="mb-2 text-2xl font-bold text-foreground">Sign In</h1>
-          <p className="mb-8 text-muted-foreground">Enter your credentials to access your account</p>
+          <h1 className="mb-2 text-2xl font-bold text-foreground">{t("auth.signIn")}</h1>
+          <p className="mb-8 text-muted-foreground">{t("auth.enterCredentials")}</p>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("auth.email")}</Label>
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@acme.com" required />
             </div>
             <div>
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t("auth.password")}</Label>
               <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password" required />
             </div>
             <div className="flex justify-end">
               <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-                Forgot password?
+                {t("auth.forgotPassword")}
               </Link>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Sign In
+              {t("auth.signIn")}
             </Button>
           </form>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            Don't have an account?{" "}
+            {t("auth.noAccount")}{" "}
             <Link to="/register" className="font-medium text-primary hover:underline">
-              Register your organization
+              {t("auth.registerOrg")}
             </Link>
           </p>
         </div>
