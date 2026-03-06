@@ -3,7 +3,7 @@ import { BookOpen, ShieldCheck, Award, ArrowRight, Sparkles, Upload, Brain, User
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
+
 
 const LandingPage = () => {
   const { session, role, loading } = useAuth();
