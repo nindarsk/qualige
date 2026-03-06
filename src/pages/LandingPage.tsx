@@ -46,6 +46,7 @@ const steps = [
 
 const LandingPage = () => {
   const { session, role, loading } = useAuth();
+  const { t } = useTranslation();
 
   if (!loading && session && role) {
     if (role === "employee") return <Navigate to="/employee" replace />;
