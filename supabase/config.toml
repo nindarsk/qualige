@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.scheduled-notifications]
 verify_jwt = false
+
+[functions.grade-quiz]
+verify_jwt = false

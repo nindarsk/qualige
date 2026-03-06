@@ -15,8 +15,6 @@ interface Question {
   question_number: number;
   question: string;
   options: string[];
-  correct_answer: string;
-  explanation: string | null;
 }
 
 const QuizPage = () => {
@@ -31,24 +29,16 @@ const QuizPage = () => {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [employeeId, setEmployeeId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user && courseId) loadQuiz();
   }, [user, courseId]);
 
   const loadQuiz = async () => {
-    const { data: emp } = await supabase
-      .from("employees")
-      .select("id")
-      .eq("user_id", user!.id)
-      .single();
-
-    if (emp) setEmployeeId(emp.id);
-
+    // Only fetch question text and options — NOT correct_answer or explanation
     const { data } = await supabase
       .from("quiz_questions")
-      .select("*")
+      .select("id, question_number, question, options")
       .eq("course_id", courseId!)
       .order("question_number");
 
@@ -72,135 +62,77 @@ const QuizPage = () => {
   };
 
   const submitQuiz = async () => {
-    if (!employeeId) return;
     setSubmitting(true);
 
-    // Calculate score — normalize answers to compare first letter (A/B/C/D)
-    const normalize = (answer: string) => answer?.toString().trim().charAt(0).toUpperCase();
-    let correct = 0;
-    const answerDetails = questions.map((q) => {
-      const userAnswer = answers[q.id] || "";
-      const isCorrect = normalize(userAnswer) === normalize(q.correct_answer);
-      if (isCorrect) correct++;
-      console.log(`[Quiz] Q${q.question_number}: selected="${userAnswer}" (${normalize(userAnswer)}), correct="${q.correct_answer}" (${normalize(q.correct_answer)}), match=${isCorrect}`);
-      return {
-        question_id: q.id,
-        question: q.question,
-        user_answer: userAnswer,
-        correct_answer: q.correct_answer,
-        is_correct: isCorrect,
-        explanation: q.explanation,
-      };
-    });
+    try {
+      // Submit answers to server-side grading function
+      const { data: result, error } = await supabase.functions.invoke("grade-quiz", {
+        body: { courseId, answers },
+      });
 
-    const score = questions.length > 0 ? (correct / questions.length) * 100 : 0;
-    const passed = score >= 70;
-
-    // Save attempt
-    const { error } = await supabase.from("quiz_attempts").insert({
-      course_id: courseId!,
-      employee_id: employeeId,
-      score,
-      passed,
-      answers: answerDetails,
-    });
-
-    if (error) {
-      toast({ title: "Failed to save quiz", description: error.message, variant: "destructive" });
-      setSubmitting(false);
-      return;
-    }
-
-    // If passed, update assignment status
-    if (passed) {
-      const { data: assign } = await supabase
-        .from("course_assignments")
-        .select("id")
-        .eq("course_id", courseId!)
-        .eq("employee_id", employeeId)
-        .single();
-
-      if (assign) {
-        await supabase
-          .from("course_assignments")
-          .update({ status: "completed" })
-          .eq("id", assign.id);
-
-        await supabase
-          .from("course_progress")
-          .update({ completed_at: new Date().toISOString() })
-          .eq("assignment_id", assign.id);
+      if (error || !result) {
+        toast({ title: "Failed to submit quiz", description: error?.message || "Please try again.", variant: "destructive" });
+        setSubmitting(false);
+        return;
       }
-    }
 
-    // Get course title for audit log and email
-    const { data: courseData } = await supabase.from("courses").select("title").eq("id", courseId!).single();
-    const courseTitle = courseData?.title || "Course";
+      const { score, passed, correct, total, answers: answerDetails } = result;
 
-    // Audit log
-    if (passed) {
-      logAuditEvent({ action: "QUIZ_PASSED", details: `Score: ${Math.round(score)}% on ${courseTitle}` });
-      logAuditEvent({ action: "COURSE_COMPLETED", details: `Employee completed: ${courseTitle}` });
-    } else {
-      logAuditEvent({ action: "QUIZ_FAILED", details: `Score: ${Math.round(score)}% on ${courseTitle}` });
-    }
+      // Get course title for audit log
+      const { data: courseData } = await supabase.from("courses").select("title").eq("id", courseId!).single();
+      const courseTitle = courseData?.title || "Course";
 
-    // Send completion email if passed
-    if (passed) {
-      try {
-        const { data: emp } = await supabase.from("employees").select("email, full_name, organization_id").eq("user_id", user!.id).single();
-        if (emp) {
-          // Send congrats to employee
-          supabase.functions.invoke("send-email", {
-            body: {
-              to: emp.email,
-              subject: `Congratulations! You completed ${courseTitle}`,
-              html_body: `
-                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-                  <div style="background: #1B3A6B; padding: 24px; text-align: center;">
-                    <h1 style="color: white; margin: 0; font-size: 24px;">Quali.ge</h1>
-                    <div style="height: 3px; background: #C9A84C; margin-top: 12px;"></div>
-                  </div>
-                  <div style="padding: 32px; background: white;">
-                    <h2 style="color: #1B3A6B;">Congratulations, ${emp.full_name}! 🎓</h2>
-                    <p>You have successfully completed the training course:</p>
-                    <p style="font-size: 18px; font-weight: bold; color: #1B3A6B;">${courseTitle}</p>
-                    <p>Your score: <strong>${Math.round(score)}%</strong></p>
-                    <p>Log in to Quali.ge to download your certificate.</p>
-                    <a href="https://qualige.lovable.app/employee/certificates" style="display: inline-block; background: #1B3A6B; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; margin-top: 16px;">Download Certificate</a>
-                  </div>
-                  <div style="background: #1B3A6B; padding: 16px; text-align: center;">
-                    <p style="color: rgba(255,255,255,0.6); font-size: 12px; margin: 0;">Quali.ge — AI-powered Learning Management System</p>
-                  </div>
-                </div>`,
-            },
-          }).catch(console.error);
+      // Audit log
+      if (passed) {
+        logAuditEvent({ action: "QUIZ_PASSED", details: `Score: ${Math.round(score)}% on ${courseTitle}` });
+        logAuditEvent({ action: "COURSE_COMPLETED", details: `Employee completed: ${courseTitle}` });
+      } else {
+        logAuditEvent({ action: "QUIZ_FAILED", details: `Score: ${Math.round(score)}% on ${courseTitle}` });
+      }
 
-          // Notify HR admin(s) — get profiles with hr_admin role in same org
-          const { data: hrProfiles } = await supabase
-            .from("profiles")
-            .select("user_id, full_name")
-            .eq("organization_id", emp.organization_id);
-
-          if (hrProfiles) {
-            for (const hr of hrProfiles) {
-              const { data: roleCheck } = await supabase.from("user_roles").select("role").eq("user_id", hr.user_id).eq("role", "hr_admin").maybeSingle();
-              if (roleCheck) {
-                const { data: { user: hrUser } } = await supabase.auth.admin?.getUserById?.(hr.user_id) || { data: { user: null } };
-                // We can't access auth.admin from client, so use profiles + auth email from metadata
-                // Instead, log notification - HR will see in audit log
-              }
-            }
+      // Send completion email if passed
+      if (passed) {
+        try {
+          const { data: emp } = await supabase.from("employees").select("email, full_name, organization_id").eq("user_id", user!.id).single();
+          if (emp) {
+            supabase.functions.invoke("send-email", {
+              body: {
+                to: emp.email,
+                subject: `Congratulations! You completed ${courseTitle}`,
+                html_body: `
+                  <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+                    <div style="background: #1B3A6B; padding: 24px; text-align: center;">
+                      <h1 style="color: white; margin: 0; font-size: 24px;">Quali.ge</h1>
+                      <div style="height: 3px; background: #C9A84C; margin-top: 12px;"></div>
+                    </div>
+                    <div style="padding: 32px; background: white;">
+                      <h2 style="color: #1B3A6B;">Congratulations, ${emp.full_name}! 🎓</h2>
+                      <p>You have successfully completed the training course:</p>
+                      <p style="font-size: 18px; font-weight: bold; color: #1B3A6B;">${courseTitle}</p>
+                      <p>Your score: <strong>${Math.round(score)}%</strong></p>
+                      <p>Log in to Quali.ge to download your certificate.</p>
+                      <a href="https://qualige.lovable.app/employee/certificates" style="display: inline-block; background: #1B3A6B; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; margin-top: 16px;">Download Certificate</a>
+                    </div>
+                    <div style="background: #1B3A6B; padding: 16px; text-align: center;">
+                      <p style="color: rgba(255,255,255,0.6); font-size: 12px; margin: 0;">Quali.ge — AI-powered Learning Management System</p>
+                    </div>
+                  </div>`,
+              },
+            }).catch(console.error);
           }
+        } catch (emailErr) {
+          console.error("Completion email error:", emailErr);
         }
-      } catch (emailErr) {
-        console.error("Completion email error:", emailErr);
       }
-    }
 
-    navigate(`/employee/learn/${courseId}/results`, {
-      state: { score, passed, answers: answerDetails, total: questions.length, correct },
-    });
+      navigate(`/employee/learn/${courseId}/results`, {
+        state: { score, passed, answers: answerDetails, total, correct },
+      });
+    } catch (err) {
+      console.error("Quiz submit error:", err);
+      toast({ title: "Failed to submit quiz", description: "Please try again.", variant: "destructive" });
+      setSubmitting(false);
+    }
   };
 
   if (loading) {
