@@ -35,7 +35,7 @@ export async function logAuditEvent({ action, details }: LogParams): Promise<voi
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
-      .single();
+      .limit(1);
 
     await supabase.from("audit_logs").insert({
       organization_id: profile.organization_id,
