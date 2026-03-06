@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { Loader2, ChevronRight, CheckCircle2, Send } from "lucide-react";
+import { logAuditEvent } from "@/lib/audit-log";
 
 interface Question {
   id: string;
