@@ -41,7 +41,7 @@ export async function logAuditEvent({ action, details }: LogParams): Promise<voi
       organization_id: profile.organization_id,
       user_id: user.id,
       user_name: profile.full_name || user.email || "Unknown",
-      user_role: roleData?.role || "unknown",
+      user_role: roleData?.[0]?.role || "unknown",
       action,
       details,
     } as any);
