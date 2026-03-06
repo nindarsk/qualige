@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { logAuditEvent } from "@/lib/audit-log";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -130,6 +131,7 @@ const EmployeesPage = () => {
       if (data?.error) throw new Error(data.error);
 
       toast({ title: "Invitation sent!", description: `${inviteForm.fullName} has been invited.` });
+      logAuditEvent({ action: "EMPLOYEE_INVITED", details: `Invited: ${inviteForm.email}` });
       setInviteForm({ fullName: "", email: "", department: "" });
       setInviteOpen(false);
       fetchEmployees();

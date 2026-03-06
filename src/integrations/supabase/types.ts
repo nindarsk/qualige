@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: string
+          id: string
+          organization_id: string
+          user_id: string
+          user_name: string
+          user_role: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: string
+          id?: string
+          organization_id: string
+          user_id: string
+          user_name?: string
+          user_role?: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: string
+          id?: string
+          organization_id?: string
+          user_id?: string
+          user_name?: string
+          user_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       certificates: {
         Row: {
           certificate_id: string
@@ -79,6 +120,9 @@ export type Database = {
           employee_id: string
           id: string
           organization_id: string
+          overdue_notified: boolean
+          reminder_1day_sent: boolean
+          reminder_3day_sent: boolean
           status: string
           updated_at: string
         }
@@ -91,6 +135,9 @@ export type Database = {
           employee_id: string
           id?: string
           organization_id: string
+          overdue_notified?: boolean
+          reminder_1day_sent?: boolean
+          reminder_3day_sent?: boolean
           status?: string
           updated_at?: string
         }
@@ -103,6 +150,9 @@ export type Database = {
           employee_id?: string
           id?: string
           organization_id?: string
+          overdue_notified?: boolean
+          reminder_1day_sent?: boolean
+          reminder_3day_sent?: boolean
           status?: string
           updated_at?: string
         }
@@ -386,39 +436,66 @@ export type Database = {
       organizations: {
         Row: {
           created_at: string
+          default_language: string | null
           id: string
+          industry: string | null
+          logo_url: string | null
           max_employees: number
           name: string
+          notify_assignment: boolean
+          notify_completion: boolean
+          notify_overdue: boolean
+          notify_reminder: boolean
           plan: string
           plan_ends_at: string | null
           plan_started_at: string | null
           plan_status: string
+          primary_contact_email: string | null
+          primary_contact_name: string | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
+          default_language?: string | null
           id?: string
+          industry?: string | null
+          logo_url?: string | null
           max_employees?: number
           name: string
+          notify_assignment?: boolean
+          notify_completion?: boolean
+          notify_overdue?: boolean
+          notify_reminder?: boolean
           plan?: string
           plan_ends_at?: string | null
           plan_started_at?: string | null
           plan_status?: string
+          primary_contact_email?: string | null
+          primary_contact_name?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
+          default_language?: string | null
           id?: string
+          industry?: string | null
+          logo_url?: string | null
           max_employees?: number
           name?: string
+          notify_assignment?: boolean
+          notify_completion?: boolean
+          notify_overdue?: boolean
+          notify_reminder?: boolean
           plan?: string
           plan_ends_at?: string | null
           plan_started_at?: string | null
           plan_status?: string
+          primary_contact_email?: string | null
+          primary_contact_name?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           updated_at?: string

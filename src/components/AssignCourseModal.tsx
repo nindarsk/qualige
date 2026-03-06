@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { logAuditEvent } from "@/lib/audit-log";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -111,6 +112,13 @@ const AssignCourseModal = ({ open, onOpenChange, courseId, courseTitle }: Assign
         title: "Course assigned!",
         description: `Course assigned to ${selected.size} employee${selected.size > 1 ? "s" : ""} successfully.`,
       });
+
+      // Audit log for each assignment
+      for (const empId of selected) {
+        const emp = employees.find((e) => e.id === empId);
+        logAuditEvent({ action: "COURSE_ASSIGNED", details: `Course: ${courseTitle} assigned to ${emp?.full_name || "employee"}` });
+      }
+
       onOpenChange(false);
     } catch (err: any) {
       toast({ title: "Assignment failed", description: err.message, variant: "destructive" });

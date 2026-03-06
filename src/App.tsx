@@ -31,6 +31,10 @@ import QuizResultsPage from "./pages/dashboards/employee/QuizResultsPage";
 import NotFound from "./pages/NotFound";
 import PricingPage from "./pages/PricingPage";
 import BillingPage from "./pages/dashboards/hr/BillingPage";
+import SettingsPage from "./pages/dashboards/hr/SettingsPage";
+import OrganizationsPage from "./pages/dashboards/admin/OrganizationsPage";
+import AdminBillingPage from "./pages/dashboards/admin/AdminBillingPage";
+import AdminSettingsPage from "./pages/dashboards/admin/AdminSettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -68,7 +72,7 @@ const App = () => (
               <Route path="employees" element={<EmployeesPage />} />
               <Route path="reports" element={<ReportsPage />} />
               <Route path="billing" element={<BillingPage />} />
-              <Route path="settings" element={<DashboardPlaceholder title="Settings" description="Organization settings and configuration." />} />
+              <Route path="settings" element={<SettingsPage />} />
             </Route>
 
             {/* Employee */}
@@ -97,9 +101,9 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
-              <Route index element={<DashboardPlaceholder title="Organizations" description="Manage all registered organizations." />} />
-              <Route path="billing" element={<DashboardPlaceholder title="Billing" description="Manage billing and subscriptions." />} />
-              <Route path="settings" element={<DashboardPlaceholder title="Settings" description="Platform-wide settings." />} />
+              <Route index element={<OrganizationsPage />} />
+              <Route path="billing" element={<AdminBillingPage />} />
+              <Route path="settings" element={<AdminSettingsPage />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />

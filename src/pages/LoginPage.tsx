@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BookOpen, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { logAuditEvent } from "@/lib/audit-log";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -30,6 +31,9 @@ const LoginPage = () => {
           .select("role")
           .eq("user_id", user.id)
           .single();
+
+        // Log audit event
+        logAuditEvent({ action: "USER_LOGIN", details: "User logged in" });
 
         if (roleData?.role === "hr_admin") navigate("/hr");
         else if (roleData?.role === "employee") navigate("/employee");

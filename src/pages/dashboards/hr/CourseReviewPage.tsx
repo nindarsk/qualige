@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { logAuditEvent } from "@/lib/audit-log";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -190,7 +191,10 @@ const CourseReviewPage = () => {
         description: publish ? "Course is now available for assignment." : "Your changes have been saved.",
       });
 
-      if (publish) navigate("/hr/courses");
+      if (publish) {
+        logAuditEvent({ action: "COURSE_PUBLISHED", details: `Course: ${course.title}` });
+        navigate("/hr/courses");
+      }
     } catch (err: any) {
       toast({ title: "Save failed", description: err.message, variant: "destructive" });
     } finally {
