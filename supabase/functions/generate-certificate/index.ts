@@ -156,6 +156,22 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Verify employee has passed the quiz before issuing certificate
+    const { data: passedAttempt } = await supabaseAdmin
+      .from("quiz_attempts")
+      .select("id, passed")
+      .eq("course_id", courseId)
+      .eq("employee_id", emp.id)
+      .eq("passed", true)
+      .maybeSingle();
+
+    if (!passedAttempt) {
+      return new Response(JSON.stringify({ error: "Course not completed. You must pass the quiz first." }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { data: existing } = await supabaseAdmin
       .from("certificates")
       .select("id, certificate_id")

@@ -160,6 +160,21 @@ serve(async (req) => {
     if (userError || !user) throw new Error("Unauthorized");
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+
+    // Verify user has HR admin role — employees must not generate courses
+    const { data: roleData } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "hr_admin")
+      .maybeSingle();
+
+    if (!roleData) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden: Only HR administrators can generate courses." }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     const body = await req.json();
     const { filePath, youtubeUrl, category, language } = body;
 
