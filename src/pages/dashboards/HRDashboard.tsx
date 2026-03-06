@@ -31,6 +31,7 @@ const navItems = [
 
 const HRDashboard = () => {
   const { organizationName, fullName, signOut } = useAuth();
+  const { t } = useTranslation();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
