@@ -108,6 +108,9 @@ const CourseLearnPage = () => {
         .from("course_assignments")
         .update({ status: "in_progress" })
         .eq("id", assign.id);
+
+      // Log course started
+      logAuditEvent({ action: "COURSE_STARTED", details: `Employee started: ${courseRes.data?.title || "Course"}` });
     }
 
     setLoading(false);
