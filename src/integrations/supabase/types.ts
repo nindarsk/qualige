@@ -288,6 +288,51 @@ export type Database = {
           },
         ]
       }
+      demo_requests: {
+        Row: {
+          billing_cycle: string | null
+          created_at: string | null
+          email: string
+          full_name: string
+          id: string
+          message: string | null
+          metadata: Json | null
+          organization_name: string
+          phone: string | null
+          plan_name: string | null
+          requested_action: string | null
+          type: string
+        }
+        Insert: {
+          billing_cycle?: string | null
+          created_at?: string | null
+          email: string
+          full_name: string
+          id?: string
+          message?: string | null
+          metadata?: Json | null
+          organization_name: string
+          phone?: string | null
+          plan_name?: string | null
+          requested_action?: string | null
+          type: string
+        }
+        Update: {
+          billing_cycle?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          message?: string | null
+          metadata?: Json | null
+          organization_name?: string
+          phone?: string | null
+          plan_name?: string | null
+          requested_action?: string | null
+          type?: string
+        }
+        Relationships: []
+      }
       employees: {
         Row: {
           created_at: string
