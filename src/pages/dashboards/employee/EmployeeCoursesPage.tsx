@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, BookOpen, Award, Calendar, PlayCircle } from "lucide-react";
 import WelcomeBanner from "@/components/WelcomeBanner";
+import { useTranslation } from "react-i18next";
 
 interface Assignment {
   id: string;
@@ -27,6 +28,7 @@ interface Assignment {
 
 const EmployeeCoursesPage = () => {
   const { user, fullName } = useAuth();
+  const { t } = useTranslation();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -104,9 +106,9 @@ const EmployeeCoursesPage = () => {
   };
 
   const getStatusLabel = (a: Assignment) => {
-    if (a.status === "completed") return "Completed";
-    if (a.progress && a.progress.completed_modules.length > 0) return "In Progress";
-    return "Not Started";
+    if (a.status === "completed") return t("status.completed");
+    if (a.progress && a.progress.completed_modules.length > 0) return t("status.inProgress");
+    return t("employee.notStarted");
   };
 
   const getStatusVariant = (a: Assignment): "default" | "outline" | "secondary" => {
@@ -120,23 +122,23 @@ const EmployeeCoursesPage = () => {
       <WelcomeBanner />
       <div>
         <h1 className="text-2xl font-bold text-foreground">
-          Hello {fullName?.split(" ")[0] || "there"}, here are your assigned courses
+          {t("employee.hello", { name: fullName?.split(" ")[0] || "there" })}
         </h1>
-        <p className="text-muted-foreground mt-1">Complete your training to earn certificates.</p>
+        <p className="text-muted-foreground mt-1">{t("employee.completeTraining")}</p>
       </div>
 
       {assignments.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <BookOpen className="mb-4 h-16 w-16 text-muted-foreground/50" />
-          <h2 className="mb-2 text-xl font-bold text-foreground">No courses assigned yet</h2>
-          <p className="text-muted-foreground">Your HR admin will assign courses to you soon.</p>
+          <h2 className="mb-2 text-xl font-bold text-foreground">{t("employee.noCoursesAssigned")}</h2>
+          <p className="text-muted-foreground">{t("employee.noCoursesAssignedDesc")}</p>
         </div>
       ) : (
         <>
           {/* Active courses */}
           {active.length > 0 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground">Active Courses</h2>
+              <h2 className="text-lg font-semibold text-foreground">{t("employee.activeCourses")}</h2>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {active.map((a) => {
                   const pct = getProgressPercent(a);
@@ -152,7 +154,7 @@ const EmployeeCoursesPage = () => {
                       <CardContent className="flex flex-1 flex-col justify-end gap-4">
                         <div>
                           <div className="flex items-center justify-between text-sm text-muted-foreground mb-1">
-                            <span>Progress</span>
+                            <span>{t("employee.progress")}</span>
                             <span>{pct}%</span>
                           </div>
                           <Progress value={pct} className="h-2" />
@@ -160,13 +162,13 @@ const EmployeeCoursesPage = () => {
                         {a.due_date && (
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Calendar className="h-3 w-3" />
-                            Due {new Date(a.due_date).toLocaleDateString()}
+                            {t("employee.due", { date: new Date(a.due_date).toLocaleDateString() })}
                           </div>
                         )}
                         <Button asChild className="w-full">
                           <Link to={`/employee/learn/${a.course_id}`}>
                             <PlayCircle className="mr-2 h-4 w-4" />
-                            {pct > 0 ? "Continue" : "Start"}
+                            {pct > 0 ? t("employee.continue") : t("employee.start")}
                           </Link>
                         </Button>
                       </CardContent>
@@ -180,14 +182,14 @@ const EmployeeCoursesPage = () => {
           {/* Completed courses */}
           {completed.length > 0 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground">Completed Courses</h2>
+              <h2 className="text-lg font-semibold text-foreground">{t("employee.completedCourses")}</h2>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {completed.map((a) => (
                   <Card key={a.id} className="flex flex-col">
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
                         <Badge variant="outline" className="text-xs">{a.course.category}</Badge>
-                        <Badge variant="default">Completed</Badge>
+                        <Badge variant="default">{t("status.completed")}</Badge>
                       </div>
                       <CardTitle className="mt-2 text-base">{a.course.title}</CardTitle>
                     </CardHeader>
@@ -195,12 +197,12 @@ const EmployeeCoursesPage = () => {
                       <Progress value={100} className="h-2" />
                       {a.progress?.completed_at && (
                         <p className="text-xs text-muted-foreground">
-                          Completed on {new Date(a.progress.completed_at).toLocaleDateString()}
+                          {t("employee.completedOn", { date: new Date(a.progress.completed_at).toLocaleDateString() })}
                         </p>
                       )}
                       <Button variant="outline" asChild className="w-full">
-                        <Link to={`/employee/certificates`}>
-                          <Award className="mr-2 h-4 w-4" /> View Certificate
+                        <Link to="/employee/certificates">
+                          <Award className="mr-2 h-4 w-4" /> {t("employee.viewCertificate")}
                         </Link>
                       </Button>
                     </CardContent>

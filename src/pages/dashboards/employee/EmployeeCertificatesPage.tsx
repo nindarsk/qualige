@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Award, Download, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface Cert {
   id: string;
@@ -17,49 +18,24 @@ interface Cert {
 
 const EmployeeCertificatesPage = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [certificates, setCertificates] = useState<Cert[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user) fetchCerts();
-  }, [user]);
+  useEffect(() => { if (user) fetchCerts(); }, [user]);
 
   const fetchCerts = async () => {
-    const { data: emp } = await supabase
-      .from("employees")
-      .select("id")
-      .eq("user_id", user!.id)
-      .single();
-
+    const { data: emp } = await supabase.from("employees").select("id").eq("user_id", user!.id).single();
     if (!emp) { setLoading(false); return; }
-
-    const { data } = await supabase
-      .from("certificates")
-      .select("id, certificate_id, issued_at, pdf_url, course_id")
-      .eq("employee_id", emp.id)
-      .order("issued_at", { ascending: false });
-
-    if (!data?.length) {
-      setCertificates([]);
-      setLoading(false);
-      return;
-    }
-
+    const { data } = await supabase.from("certificates").select("id, certificate_id, issued_at, pdf_url, course_id").eq("employee_id", emp.id).order("issued_at", { ascending: false });
+    if (!data?.length) { setCertificates([]); setLoading(false); return; }
     const enriched: Cert[] = await Promise.all(
       data.map(async (c) => {
-        const { data: course } = await supabase
-          .from("courses")
-          .select("title, category")
-          .eq("id", c.course_id)
-          .single();
-        return {
-          ...c,
-          course: course || { title: "Unknown", category: "" },
-        };
+        const { data: course } = await supabase.from("courses").select("title, category").eq("id", c.course_id).single();
+        return { ...c, course: course || { title: "Unknown", category: "" } };
       })
     );
-
     setCertificates(enriched);
     setLoading(false);
   };
@@ -70,33 +46,29 @@ const EmployeeCertificatesPage = () => {
     try {
       await downloadCertificate(cert.certificate_id, user.id);
     } catch {
-      alert("Download failed. Please try again.");
+      alert(t("certificates.downloadFailed"));
     } finally {
       setDownloading(null);
     }
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <div className="flex items-center justify-center py-24"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
   if (certificates.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
         <Award className="mb-4 h-16 w-16 text-muted-foreground/50" />
-        <h2 className="mb-2 text-xl font-bold text-foreground">No certificates yet</h2>
-        <p className="text-muted-foreground">Complete courses and pass quizzes to earn certificates.</p>
+        <h2 className="mb-2 text-xl font-bold text-foreground">{t("certificates.noCertificates")}</h2>
+        <p className="text-muted-foreground">{t("certificates.noCertificatesDesc")}</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">My Certificates</h1>
+      <h1 className="text-2xl font-bold text-foreground">{t("certificates.title")}</h1>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {certificates.map((cert) => (
           <Card key={cert.id}>
@@ -111,24 +83,12 @@ const EmployeeCertificatesPage = () => {
                 <Badge variant="outline" className="text-xs">{cert.course.category}</Badge>
               </div>
               <p className="mt-3 text-center text-xs text-muted-foreground">
-                Issued {new Date(cert.issued_at).toLocaleDateString()}
+                {t("certificates.issued", { date: new Date(cert.issued_at).toLocaleDateString() })}
               </p>
-              <p className="text-center text-xs text-muted-foreground font-mono mt-1">
-                {cert.certificate_id}
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-4 w-full"
-                disabled={downloading === cert.id}
-                onClick={() => handleDownload(cert)}
-              >
-                {downloading === cert.id ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Download className="mr-2 h-4 w-4" />
-                )}
-                Download PDF
+              <p className="text-center text-xs text-muted-foreground font-mono mt-1">{cert.certificate_id}</p>
+              <Button variant="outline" size="sm" className="mt-4 w-full" disabled={downloading === cert.id} onClick={() => handleDownload(cert)}>
+                {downloading === cert.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                {t("certificates.downloadPdf")}
               </Button>
             </CardContent>
           </Card>

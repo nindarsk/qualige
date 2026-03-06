@@ -9,6 +9,7 @@ interface CertificateData {
   certificateId: string;
   score: number;
   hrAdminName: string;
+  language: string;
 }
 
 function generateCertificateId(): string {
@@ -21,8 +22,56 @@ function generateCertificateId(): string {
   return `QUALI-${year}-${code}`;
 }
 
+// Language-specific certificate text
+const certText: Record<string, {
+  title: string;
+  subtitle: string;
+  completedText: string;
+  issuedBy: string;
+  authorizedBy: string;
+  score: string;
+  date: string;
+  certId: string;
+  footer: string;
+}> = {
+  English: {
+    title: "CERTIFICATE OF COMPLETION",
+    subtitle: "This certifies that",
+    completedText: "has successfully completed the training course",
+    issuedBy: "Issued by",
+    authorizedBy: "Authorized by",
+    score: "Score",
+    date: "Date",
+    certId: "Certificate ID",
+    footer: "Quali.ge — AI-powered Learning Management System for Financial Institutions",
+  },
+  Georgian: {
+    title: "კვალიფიკაციის სერტიფიკატი",
+    subtitle: "ამით დასტურდება, რომ",
+    completedText: "წარმატებით დაასრულა სასწავლო კურსი",
+    issuedBy: "გაცემულია",
+    authorizedBy: "დამტკიცებულია",
+    score: "ქულა",
+    date: "თარიღი",
+    certId: "სერტიფიკატის ID",
+    footer: "Quali.ge — AI-ზე დაფუძნებული სასწავლო მართვის სისტემა ფინანსური ინსტიტუტებისთვის",
+  },
+  Russian: {
+    title: "СЕРТИФИКАТ О ПРОХОЖДЕНИИ",
+    subtitle: "Настоящим подтверждается, что",
+    completedText: "успешно завершил(а) учебный курс",
+    issuedBy: "Выдан",
+    authorizedBy: "Утверждён",
+    score: "Балл",
+    date: "Дата",
+    certId: "ID сертификата",
+    footer: "Quali.ge — Система управления обучением на основе ИИ для финансовых учреждений",
+  },
+};
+
 function buildPdf(data: CertificateData): jsPDF {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  const lang = certText[data.language] || certText.English;
 
   // Background
   doc.setFillColor(27, 58, 107);
@@ -39,13 +88,13 @@ function buildPdf(data: CertificateData): jsPDF {
   doc.setTextColor(27, 58, 107);
   doc.setFontSize(32);
   doc.setFont("helvetica", "bold");
-  doc.text("CERTIFICATE OF COMPLETION", 148.5, 50, { align: "center" });
+  doc.text(lang.title, 148.5, 50, { align: "center" });
 
   // Subtitle
   doc.setFontSize(14);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(100, 100, 100);
-  doc.text("This certifies that", 148.5, 70, { align: "center" });
+  doc.text(lang.subtitle, 148.5, 70, { align: "center" });
 
   // Employee name
   doc.setFontSize(28);
@@ -62,7 +111,7 @@ function buildPdf(data: CertificateData): jsPDF {
   doc.setFontSize(13);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(100, 100, 100);
-  doc.text("has successfully completed the training course", 148.5, 110, { align: "center" });
+  doc.text(lang.completedText, 148.5, 110, { align: "center" });
 
   // Course title
   doc.setFontSize(18);
@@ -74,21 +123,21 @@ function buildPdf(data: CertificateData): jsPDF {
   doc.setFontSize(12);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(100, 100, 100);
-  doc.text(`Issued by: ${data.organizationName}`, 148.5, 142, { align: "center" });
+  doc.text(`${lang.issuedBy}: ${data.organizationName}`, 148.5, 142, { align: "center" });
 
   // Date and Certificate ID
   doc.setFontSize(10);
-  doc.text(`Date: ${data.completionDate}`, 50, 165);
-  doc.text(`Certificate ID: ${data.certificateId}`, 50, 172);
+  doc.text(`${lang.date}: ${data.completionDate}`, 50, 165);
+  doc.text(`${lang.certId}: ${data.certificateId}`, 50, 172);
 
   // Score & authorized
-  doc.text(`Score: ${Math.round(data.score)}%`, 200, 165);
-  doc.text(`Authorized by: ${data.hrAdminName}`, 200, 172);
+  doc.text(`${lang.score}: ${Math.round(data.score)}%`, 200, 165);
+  doc.text(`${lang.authorizedBy}: ${data.hrAdminName}`, 200, 172);
 
   // Footer
   doc.setFontSize(9);
   doc.setTextColor(150, 150, 150);
-  doc.text("Quali.ge — AI-powered Learning Management System for Financial Institutions", 148.5, 195, { align: "center" });
+  doc.text(lang.footer, 148.5, 195, { align: "center" });
 
   return doc;
 }
@@ -99,7 +148,6 @@ export async function generateAndUploadCertificate(
   score: number
 ): Promise<{ certificateId: string; pdfUrl: string } | null> {
   try {
-    // Get employee info
     const { data: emp } = await supabase
       .from("employees")
       .select("id, full_name, organization_id")
@@ -107,7 +155,6 @@ export async function generateAndUploadCertificate(
       .single();
     if (!emp) return null;
 
-    // Check if certificate already exists
     const { data: existing } = await supabase
       .from("certificates")
       .select("id, certificate_id, pdf_url")
@@ -119,13 +166,11 @@ export async function generateAndUploadCertificate(
       return { certificateId: existing.certificate_id, pdfUrl: existing.pdf_url };
     }
 
-    // Get course and org info
     const [courseRes, orgRes] = await Promise.all([
-      supabase.from("courses").select("title, created_by").eq("id", courseId).single(),
+      supabase.from("courses").select("title, created_by, language").eq("id", courseId).single(),
       supabase.from("organizations").select("name").eq("id", emp.organization_id).single(),
     ]);
 
-    // Get HR admin name
     let hrAdminName = "HR Administrator";
     if (courseRes.data?.created_by) {
       const { data: hrProfile } = await supabase
@@ -137,11 +182,12 @@ export async function generateAndUploadCertificate(
     }
 
     const certId = existing?.certificate_id || generateCertificateId();
-    const completionDate = new Date().toLocaleDateString("en-US", {
-      year: "numeric", month: "long", day: "numeric",
-    });
+    const courseLanguage = courseRes.data?.language || "English";
+    const completionDate = new Date().toLocaleDateString(
+      courseLanguage === "Georgian" ? "ka-GE" : courseLanguage === "Russian" ? "ru-RU" : "en-US",
+      { year: "numeric", month: "long", day: "numeric" }
+    );
 
-    // Generate PDF
     const doc = buildPdf({
       employeeName: emp.full_name,
       courseTitle: courseRes.data?.title || "Course",
@@ -150,12 +196,12 @@ export async function generateAndUploadCertificate(
       certificateId: certId,
       score,
       hrAdminName,
+      language: courseLanguage,
     });
 
     const pdfBlob = doc.output("blob");
     const filePath = `${userId}/${certId}.pdf`;
 
-    // Upload to storage
     const { error: uploadError } = await supabase.storage
       .from("certificates")
       .upload(filePath, pdfBlob, { contentType: "application/pdf", upsert: true });
@@ -165,7 +211,6 @@ export async function generateAndUploadCertificate(
       return null;
     }
 
-    // Generate signed URL (1 year)
     const { data: urlData } = await supabase.storage
       .from("certificates")
       .createSignedUrl(filePath, 60 * 60 * 24 * 365);
@@ -173,13 +218,8 @@ export async function generateAndUploadCertificate(
     const pdfUrl = urlData?.signedUrl || null;
 
     if (existing) {
-      // Update existing record
-      await supabase
-        .from("certificates")
-        .update({ pdf_url: pdfUrl })
-        .eq("id", existing.id);
+      await supabase.from("certificates").update({ pdf_url: pdfUrl }).eq("id", existing.id);
     } else {
-      // Insert new record
       await supabase.from("certificates").insert({
         course_id: courseId,
         employee_id: emp.id,
