@@ -32,6 +32,9 @@ const LoginPage = () => {
           .eq("user_id", user.id)
           .single();
 
+        // Log audit event
+        logAuditEvent({ action: "USER_LOGIN", details: "User logged in" });
+
         if (roleData?.role === "hr_admin") navigate("/hr");
         else if (roleData?.role === "employee") navigate("/employee");
         else if (roleData?.role === "super_admin") navigate("/admin");
