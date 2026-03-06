@@ -103,15 +103,10 @@ serve(async (req) => {
       `;
     }
 
-    // Use Supabase's built-in email or a simple SMTP approach via the Lovable API
-    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
-    
-    // Send via Supabase Auth admin (workaround: log and store request)
-    // For now, store the request in the database for the founder to review
+    // Store in DB
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Insert into a demo_requests table
     const insertRes = await fetch(`${supabaseUrl}/rest/v1/demo_requests`, {
       method: "POST",
       headers: {
@@ -141,6 +136,25 @@ serve(async (req) => {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Also send email via Resend if RESEND_API_KEY is configured
+    const resendKey = Deno.env.get("RESEND_API_KEY");
+    if (resendKey && founderEmail) {
+      try {
+        const { Resend } = await import("npm:resend@6");
+        const resend = new Resend(resendKey);
+        const fromAddress = Deno.env.get("EMAIL_FROM") || "onboarding@resend.dev";
+        await resend.emails.send({
+          from: fromAddress,
+          to: founderEmail,
+          subject,
+          html: body,
+        });
+      } catch (emailErr) {
+        console.error("Email send failed (non-blocking):", emailErr);
+        // Don't fail the request if email fails — data is stored in DB
+      }
     }
 
     return new Response(JSON.stringify({ success: true }), {
