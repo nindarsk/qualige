@@ -2,6 +2,8 @@ import { Link, Navigate } from "react-router-dom";
 import { BookOpen, ShieldCheck, Award, ArrowRight, Sparkles, Upload, Brain, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const features = [
   {
