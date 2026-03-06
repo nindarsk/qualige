@@ -1,21 +1,18 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { CreditCard, Calendar, FileText, ExternalLink, AlertTriangle } from "lucide-react";
+import { Calendar, FileText, Mail } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import PlanChangeModal from "@/components/PlanChangeModal";
 
 interface OrgBilling {
   plan: string;
   plan_status: string;
   plan_started_at: string | null;
   plan_ends_at: string | null;
-  stripe_customer_id: string | null;
-  stripe_subscription_id: string | null;
 }
 
 const planLabels: Record<string, string> = {
@@ -32,44 +29,25 @@ const planPrices: Record<string, number> = {
   pilot: 0,
 };
 
-const mockInvoices = [
-  { id: "INV-001", date: "2026-02-01", amount: 349, status: "Paid" },
-  { id: "INV-002", date: "2026-01-01", amount: 349, status: "Paid" },
-  { id: "INV-003", date: "2025-12-01", amount: 349, status: "Paid" },
-];
-
 const BillingPage = () => {
-  const { organizationId } = useAuth();
-  const { toast } = useToast();
-  const [searchParams] = useSearchParams();
+  const { organizationId, organizationName, fullName, user } = useAuth();
   const [billing, setBilling] = useState<OrgBilling | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const success = searchParams.get("success") === "true";
-
-  useEffect(() => {
-    if (success) {
-      toast({ title: "Payment Successful!", description: "Your subscription is now active." });
-    }
-  }, [success]);
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     if (!organizationId) return;
-    const fetch = async () => {
+    const fetchBilling = async () => {
       const { data } = await supabase
         .from("organizations")
-        .select("plan, plan_status, plan_started_at, plan_ends_at, stripe_customer_id, stripe_subscription_id")
+        .select("plan, plan_status, plan_started_at, plan_ends_at")
         .eq("id", organizationId)
         .single();
       if (data) setBilling(data as OrgBilling);
       setLoading(false);
     };
-    fetch();
+    fetchBilling();
   }, [organizationId]);
-
-  const handlePortal = () => {
-    toast({ title: "Coming Soon", description: "Stripe Customer Portal integration will be available shortly." });
-  };
 
   if (loading) {
     return (
@@ -91,26 +69,11 @@ const BillingPage = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Billing & Subscription</h1>
-        <p className="text-muted-foreground">Manage your plan, payment method, and invoices.</p>
+        <p className="text-muted-foreground">View your current plan and request changes.</p>
       </div>
 
-      {status === "cancelled" && (
-        <div className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
-          <AlertTriangle className="h-5 w-5 text-destructive" />
-          <div>
-            <p className="font-medium text-destructive">Your subscription has ended.</p>
-            <p className="text-sm text-muted-foreground">
-              Renew your plan to continue creating courses.
-            </p>
-          </div>
-          <Button size="sm" className="ml-auto gradient-gold border-0 text-accent-foreground" asChild>
-            <a href="/pricing">View Plans</a>
-          </Button>
-        </div>
-      )}
-
       {/* Plan overview */}
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Current Plan</CardDescription>
@@ -135,74 +98,40 @@ const BillingPage = () => {
             </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Payment Method</CardDescription>
-            <CardTitle className="text-xl flex items-center gap-2">
-              <CreditCard className="h-5 w-5 text-muted-foreground" />
-              {billing?.stripe_customer_id ? "•••• 4242" : "No card on file"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" size="sm" onClick={handlePortal}>
-              Update
-            </Button>
-          </CardContent>
-        </Card>
       </div>
 
-      {/* Actions */}
-      <div className="flex flex-wrap gap-3">
-        <Button onClick={handlePortal}>
-          <ExternalLink className="mr-2 h-4 w-4" />
-          Upgrade / Downgrade
-        </Button>
-        <Button variant="outline" onClick={handlePortal}>
-          Cancel Subscription
+      {/* Action */}
+      <div>
+        <Button onClick={() => setModalOpen(true)}>
+          <Mail className="mr-2 h-4 w-4" />
+          Contact Us to Change Plan
         </Button>
       </div>
 
-      {/* Invoice history */}
+      {/* Info */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Billing History
+            Need Help?
           </CardTitle>
-          <CardDescription>Past invoices and receipts.</CardDescription>
+          <CardDescription>
+            For billing questions, invoices, or custom pricing, contact us at{" "}
+            <a href="mailto:hello@quali.ge" className="text-accent underline">
+              hello@quali.ge
+            </a>
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Invoice</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {mockInvoices.map((inv) => (
-                <TableRow key={inv.id}>
-                  <TableCell className="font-medium">{inv.id}</TableCell>
-                  <TableCell>{inv.date}</TableCell>
-                  <TableCell>${inv.amount}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">{inv.status}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm" onClick={() => toast({ title: "Coming Soon", description: "Invoice download will be available with Stripe integration." })}>
-                      Download
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
       </Card>
+
+      <PlanChangeModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        organizationName={organizationName || ""}
+        currentPlan={planLabels[plan] || plan}
+        adminEmail={user?.email || ""}
+        adminName={fullName || ""}
+      />
     </div>
   );
 };

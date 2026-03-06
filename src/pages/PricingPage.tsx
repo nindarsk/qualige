@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import RequestDemoModal from "@/components/RequestDemoModal";
 
 const plans = [
   {
@@ -60,14 +60,7 @@ const plans = [
 const PricingPage = () => {
   const [annual, setAnnual] = useState(false);
   const { session } = useAuth();
-  const { toast } = useToast();
-
-  const handleSubscribe = (planName: string) => {
-    toast({
-      title: "Coming Soon",
-      description: `Stripe integration for the ${planName} plan will be available shortly.`,
-    });
-  };
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen bg-background">
@@ -172,9 +165,9 @@ const PricingPage = () => {
                         : ""
                     )}
                     variant={plan.popular ? "default" : "outline"}
-                    onClick={() => handleSubscribe(plan.name)}
+                    onClick={() => setSelectedPlan(plan.name)}
                   >
-                    Subscribe
+                    Request Demo
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </CardFooter>
@@ -194,6 +187,13 @@ const PricingPage = () => {
           <p>© 2026 Quali. All rights reserved.</p>
         </div>
       </footer>
+
+      <RequestDemoModal
+        open={!!selectedPlan}
+        onOpenChange={(open) => !open && setSelectedPlan(null)}
+        planName={selectedPlan || ""}
+        billingCycle={annual ? "annual" : "monthly"}
+      />
     </div>
   );
 };
