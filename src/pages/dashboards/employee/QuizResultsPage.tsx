@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, XCircle, Award, RotateCcw, Home, Download, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { logAuditEvent } from "@/lib/audit-log";
 
 interface AnswerDetail {
   question_id: string;
