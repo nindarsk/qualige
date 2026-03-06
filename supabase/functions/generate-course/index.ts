@@ -10,6 +10,21 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const ALLOWED_CATEGORIES = ["Compliance", "Safety", "HR", "IT", "Operations", "Finance", "Sales", "Marketing", "Leadership", "Other", "General"];
+const ALLOWED_LANGUAGES = ["English", "French", "Spanish", "German", "Arabic", "Portuguese", "Chinese", "Japanese", "Korean", "Hindi", "Dutch", "Italian", "Russian", "Turkish"];
+
+function validateInput(input: { filePath?: string; youtubeUrl?: string; category?: string; language?: string }) {
+  if (!input.filePath && !input.youtubeUrl) {
+    throw new Error("No file or YouTube URL provided");
+  }
+  if (input.filePath && typeof input.filePath !== "string") throw new Error("Invalid file path");
+  if (input.filePath && input.filePath.length > 500) throw new Error("File path too long");
+  if (input.youtubeUrl && typeof input.youtubeUrl !== "string") throw new Error("Invalid YouTube URL");
+  if (input.youtubeUrl && input.youtubeUrl.length > 500) throw new Error("YouTube URL too long");
+  if (input.category && !ALLOWED_CATEGORIES.includes(input.category)) throw new Error("Invalid category");
+  if (input.language && !ALLOWED_LANGUAGES.includes(input.language)) throw new Error("Invalid language");
+}
+
 function extractVideoId(url: string): string | null {
   const patterns = [
     /[?&]v=([a-zA-Z0-9_-]{11})/,
@@ -27,7 +42,6 @@ function extractVideoId(url: string): string | null {
 }
 
 function cleanTranscript(xml: string): string {
-  // Remove XML tags, decode entities, clean noise
   let text = xml.replace(/<[^>]+>/g, " ");
   text = text.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&apos;/g, "'");
   text = text.replace(/\[Music\]/gi, "").replace(/\[Applause\]/gi, "").replace(/\[Laughter\]/gi, "");
@@ -38,8 +52,6 @@ function cleanTranscript(xml: string): string {
 function extractVideoMetadata(html: string): { title: string; description: string } {
   let title = "";
   let description = "";
-
-  // Extract title
   const titleMatch = html.match(/"title"\s*:\s*"((?:[^"\\]|\\.)*)"/);
   if (titleMatch) title = titleMatch[1].replace(/\\"/g, '"').replace(/\\n/g, "\n");
   if (!title) {
@@ -47,26 +59,21 @@ function extractVideoMetadata(html: string): { title: string; description: strin
       || html.match(/<title>([^<]*)<\/title>/);
     if (ogTitle) title = ogTitle[1];
   }
-
-  // Extract description
   const descMatch = html.match(/"shortDescription"\s*:\s*"((?:[^"\\]|\\.)*)"/);
   if (descMatch) description = descMatch[1].replace(/\\"/g, '"').replace(/\\n/g, "\n");
   if (!description) {
     const ogDesc = html.match(/<meta[^>]*property="og:description"[^>]*content="([^"]*)"/);
     if (ogDesc) description = ogDesc[1];
   }
-
   return { title, description };
 }
 
 async function fetchYouTubeTranscript(videoId: string): Promise<{ text: string; source: "transcript" | "metadata" }> {
-  // Try direct timedtext endpoints first
   const endpoints = [
     `https://www.youtube.com/api/timedtext?lang=en&v=${videoId}`,
     `https://video.google.com/timedtext?lang=en&v=${videoId}`,
     `https://www.youtube.com/api/timedtext?v=${videoId}`,
   ];
-
   for (const url of endpoints) {
     try {
       const resp = await fetch(url);
@@ -75,21 +82,15 @@ async function fetchYouTubeTranscript(videoId: string): Promise<{ text: string; 
       if (!xml || xml.trim().length < 50) continue;
       const cleaned = cleanTranscript(xml);
       if (cleaned.length > 50) return { text: cleaned, source: "transcript" };
-    } catch {
-      continue;
-    }
+    } catch { continue; }
   }
-
-  // Fallback: fetch the watch page
   let lastHtml = "";
   const pageUrls = [
     `https://www.youtube.com/watch?v=${videoId}`,
     `https://m.youtube.com/watch?v=${videoId}`,
   ];
-
   for (const pageUrl of pageUrls) {
     try {
-      console.log(`Fetching page: ${pageUrl}`);
       const pageResp = await fetch(pageUrl, {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -100,77 +101,41 @@ async function fetchYouTubeTranscript(videoId: string): Promise<{ text: string; 
       if (!pageResp.ok) continue;
       const html = await pageResp.text();
       lastHtml = html;
-      console.log(`Page HTML length: ${html.length}`);
-
-      const hasCaptions = html.includes("captionTracks");
-      console.log(`Video has captions data: ${hasCaptions}`);
-
-      if (hasCaptions) {
-        // Try to extract caption URLs
+      if (html.includes("captionTracks")) {
         const captionMatch = html.match(/"captionTracks":\s*\[.*?\]/s);
         if (captionMatch) {
           const baseUrlMatches = captionMatch[0].matchAll(/"baseUrl"\s*:\s*"(.*?)"/g);
           for (const urlMatch of baseUrlMatches) {
             try {
               const captionUrl = urlMatch[1].replace(/\\u0026/g, "&").replace(/\\"/g, '"');
-              console.log(`Found caption URL, fetching transcript...`);
               const captionResp = await fetch(captionUrl);
               if (!captionResp.ok) { await captionResp.text(); continue; }
               const xml = await captionResp.text();
               const cleaned = cleanTranscript(xml);
               if (cleaned.length > 50) return { text: cleaned, source: "transcript" };
-            } catch {
-              continue;
-            }
+            } catch { continue; }
           }
         }
       }
-    } catch (e) {
-      console.log(`Page scraping error for ${pageUrl}:`, e);
-      continue;
-    }
+    } catch { continue; }
   }
-
-  // Final fallback: use video title + description as context for AI
-  const html = lastHtml;
-  if (html) {
-    const meta = extractVideoMetadata(html);
-    console.log(`Fallback to metadata — title: "${meta.title}", desc length: ${meta.description.length}`);
+  if (lastHtml) {
+    const meta = extractVideoMetadata(lastHtml);
     if (meta.title) {
       const fallbackText = `Video Title: ${meta.title}\n\nVideo Description: ${meta.description || "No description available."}`;
       return { text: fallbackText, source: "metadata" };
     }
   }
-
-  console.log("All transcript extraction methods failed for video:", videoId);
   return { text: "", source: "transcript" };
 }
 
 async function extractText(fileData: Blob, fileName: string): Promise<string> {
   const ext = fileName.split(".").pop()?.toLowerCase();
   const arrayBuffer = await fileData.arrayBuffer();
-
-  if (ext === "txt") {
-    return new TextDecoder("utf-8").decode(arrayBuffer);
-  }
-
-  if (ext === "pdf") {
-    const buffer = new Uint8Array(arrayBuffer);
-    const result = await pdf(buffer);
-    return result.text;
-  }
-
-  if (ext === "docx") {
-    const result = await mammoth.extractRawText({ arrayBuffer });
-    return result.value;
-  }
-
-  if (ext === "pptx") {
-    const buffer = new Uint8Array(arrayBuffer);
-    const text = await officeparser.parseOfficeAsync(buffer);
-    return text;
-  }
-
+  if (ext === "txt") return new TextDecoder("utf-8").decode(arrayBuffer);
+  if (ext === "pdf") { const result = await pdf(new Uint8Array(arrayBuffer)); return result.text; }
+  if (ext === "docx") { const result = await mammoth.extractRawText({ arrayBuffer }); return result.value; }
+  if (ext === "pptx") { return await officeparser.parseOfficeAsync(new Uint8Array(arrayBuffer)); }
   return new TextDecoder("utf-8", { fatal: false }).decode(arrayBuffer);
 }
 
@@ -195,7 +160,11 @@ serve(async (req) => {
     if (userError || !user) throw new Error("Unauthorized");
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
-    const { filePath, youtubeUrl, category, language } = await req.json();
+    const body = await req.json();
+    const { filePath, youtubeUrl, category, language } = body;
+
+    // Input validation
+    validateInput({ filePath, youtubeUrl, category, language });
 
     let textContent = "";
 
@@ -203,7 +172,13 @@ serve(async (req) => {
       const { data: fileData, error: downloadError } = await supabaseAdmin.storage
         .from("course-materials")
         .download(filePath);
-      if (downloadError) throw new Error(`File download failed: ${downloadError.message}`);
+      if (downloadError) {
+        console.error("File download failed:", downloadError);
+        return new Response(
+          JSON.stringify({ error: "Failed to download the uploaded file. Please try uploading again." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
       try {
         textContent = await extractText(fileData, filePath);
@@ -223,12 +198,8 @@ serve(async (req) => {
         );
       }
 
-      console.log("Extracted text (first 500 chars):", cleaned.substring(0, 500));
-
-      // Truncate to ~12000 words if needed
       const words = textContent.split(/\s+/);
       if (words.length > 12000) {
-        console.warn(`Text has ${words.length} words, truncating to 12000.`);
         textContent = words.slice(0, 12000).join(" ");
       }
     } else if (youtubeUrl) {
@@ -240,30 +211,21 @@ serve(async (req) => {
         );
       }
 
-      console.log("Extracting transcript for video:", videoId);
       const result = await fetchYouTubeTranscript(videoId);
-
       if (!result.text || result.text.length < 20) {
         return new Response(
-          JSON.stringify({ error: "Could not extract transcript from this YouTube video. The video may not have captions enabled. Please try a different video or upload a document instead." }),
+          JSON.stringify({ error: "Could not extract transcript from this YouTube video. The video may not have captions enabled." }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
       textContent = result.text;
-      console.log(`YouTube content source: ${result.source}`);
-      console.log("YouTube content (first 500 chars):", textContent.substring(0, 500));
-
       const words = textContent.split(/\s+/);
       if (words.length > 12000) {
-        console.warn(`Content has ${words.length} words, truncating to 12000.`);
         textContent = words.slice(0, 12000).join(" ");
       }
-    } else {
-      throw new Error("No file or YouTube URL provided");
     }
 
-    // Get organization_id
     const { data: orgData } = await supabaseAdmin
       .from("profiles")
       .select("organization_id")
@@ -334,12 +296,18 @@ The course category is: ${category || "General"}.`;
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      throw new Error(`AI generation failed: ${aiResponse.status}`);
+      return new Response(JSON.stringify({ error: "Failed to generate course content. Please try again." }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const aiData = await aiResponse.json();
     const content = aiData.choices?.[0]?.message?.content;
-    if (!content) throw new Error("No content from AI");
+    if (!content) {
+      return new Response(JSON.stringify({ error: "Failed to generate course content. Please try again." }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     let courseData;
     try {
@@ -351,13 +319,14 @@ The course category is: ${category || "General"}.`;
       try {
         courseData = JSON.parse(cleaned);
       } catch {
-        // Fix trailing commas and control chars
         cleaned = cleaned.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]").replace(/[\x00-\x1F\x7F]/g, "");
         courseData = JSON.parse(cleaned);
       }
     } catch (parseErr) {
-      console.error("JSON parse error:", parseErr, "Raw content (last 200):", content.slice(-200));
-      throw new Error("Failed to parse AI response as JSON");
+      console.error("JSON parse error:", parseErr);
+      return new Response(JSON.stringify({ error: "Failed to process AI response. Please try again." }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const { data: course, error: courseError } = await supabaseAdmin
@@ -378,7 +347,12 @@ The course category is: ${category || "General"}.`;
       .select()
       .single();
 
-    if (courseError) throw new Error(`Failed to save course: ${courseError.message}`);
+    if (courseError) {
+      console.error("Course insert error:", courseError);
+      return new Response(JSON.stringify({ error: "Failed to save course. Please try again." }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (courseData.modules?.length) {
       const modules = courseData.modules.map((m: any, i: number) => ({
@@ -406,8 +380,6 @@ The course category is: ${category || "General"}.`;
       if (questions.length > 0) {
         const { error: quizError } = await supabaseAdmin.from("quiz_questions").insert(questions);
         if (quizError) console.error("Quiz insert error:", quizError);
-      } else {
-        console.warn("No valid quiz questions to insert after filtering");
       }
     }
 
@@ -417,7 +389,7 @@ The course category is: ${category || "General"}.`;
   } catch (e) {
     console.error("generate-course error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      JSON.stringify({ error: "An unexpected error occurred. Please try again." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

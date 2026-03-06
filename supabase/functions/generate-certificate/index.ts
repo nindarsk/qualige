@@ -6,6 +6,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function generateCertificateId(): string {
   const year = new Date().getFullYear();
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -24,6 +26,8 @@ function generateCertificateHTML(
   certificateId: string,
   hrAdminName: string
 ): string {
+  // Escape HTML to prevent XSS
+  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   return `
 <!DOCTYPE html>
 <html>
@@ -32,28 +36,10 @@ function generateCertificateHTML(
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Inter', sans-serif; }
-  .cert {
-    width: 842px; height: 595px;
-    background: #fff;
-    position: relative;
-    overflow: hidden;
-  }
-  .border-frame {
-    position: absolute; inset: 16px;
-    border: 3px solid #1B3A6B;
-    border-radius: 8px;
-  }
-  .border-inner {
-    position: absolute; inset: 4px;
-    border: 1px solid #C9A84C;
-    border-radius: 6px;
-  }
-  .content {
-    position: absolute; inset: 40px;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    text-align: center;
-  }
+  .cert { width: 842px; height: 595px; background: #fff; position: relative; overflow: hidden; }
+  .border-frame { position: absolute; inset: 16px; border: 3px solid #1B3A6B; border-radius: 8px; }
+  .border-inner { position: absolute; inset: 4px; border: 1px solid #C9A84C; border-radius: 6px; }
+  .content { position: absolute; inset: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
   .logo { font-family: 'Playfair Display', serif; font-size: 28px; color: #1B3A6B; margin-bottom: 4px; }
   .logo-sub { font-size: 10px; color: #C9A84C; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 24px; }
   .title { font-family: 'Playfair Display', serif; font-size: 24px; color: #1B3A6B; margin-bottom: 20px; }
@@ -78,24 +64,24 @@ function generateCertificateHTML(
     <div class="logo-sub">Training Platform</div>
     <div class="title">Certificate of Completion</div>
     <div class="gold-line"></div>
-    <div class="name">${employeeName}</div>
+    <div class="name">${esc(employeeName)}</div>
     <div class="desc">Has successfully completed the training course</div>
-    <div class="course">${courseTitle}</div>
-    <div class="org">at ${organizationName}</div>
+    <div class="course">${esc(courseTitle)}</div>
+    <div class="org">at ${esc(organizationName)}</div>
     <div class="footer">
       <div class="footer-item">
         <div class="footer-line"></div>
-        <div class="footer-value">${completionDate}</div>
+        <div class="footer-value">${esc(completionDate)}</div>
         <div class="footer-label">Completion Date</div>
       </div>
       <div class="footer-item">
         <div class="footer-line"></div>
-        <div class="footer-value">${hrAdminName}</div>
+        <div class="footer-value">${esc(hrAdminName)}</div>
         <div class="footer-label">Authorized By</div>
       </div>
     </div>
   </div>
-  <div class="cert-id">${certificateId}</div>
+  <div class="cert-id">${esc(certificateId)}</div>
 </div>
 </body>
 </html>`;
@@ -134,7 +120,14 @@ Deno.serve(async (req) => {
 
     const { courseId } = await req.json();
 
-    // Get employee
+    // Input validation
+    if (!courseId || typeof courseId !== "string" || !UUID_REGEX.test(courseId)) {
+      return new Response(JSON.stringify({ error: "Invalid course ID" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { data: emp } = await supabaseAdmin
       .from("employees")
       .select("id, full_name, organization_id")
@@ -148,7 +141,21 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check if certificate already exists
+    // Verify the course belongs to the employee's organization
+    const { data: courseCheck } = await supabaseAdmin
+      .from("courses")
+      .select("id")
+      .eq("id", courseId)
+      .eq("organization_id", emp.organization_id)
+      .single();
+
+    if (!courseCheck) {
+      return new Response(JSON.stringify({ error: "Course not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { data: existing } = await supabaseAdmin
       .from("certificates")
       .select("id, certificate_id")
@@ -162,13 +169,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get course and org info
     const [courseRes, orgRes] = await Promise.all([
       supabaseAdmin.from("courses").select("title, created_by").eq("id", courseId).single(),
       supabaseAdmin.from("organizations").select("name").eq("id", emp.organization_id).single(),
     ]);
 
-    // Get HR admin name
     let hrAdminName = "HR Administrator";
     if (courseRes.data?.created_by) {
       const { data: hrProfile } = await supabaseAdmin
@@ -184,7 +189,6 @@ Deno.serve(async (req) => {
       year: "numeric", month: "long", day: "numeric",
     });
 
-    // Generate certificate HTML (store as text, rendered client-side)
     const certHtml = generateCertificateHTML(
       emp.full_name,
       courseRes.data?.title || "Course",
@@ -194,7 +198,6 @@ Deno.serve(async (req) => {
       hrAdminName
     );
 
-    // Store HTML as a file in storage
     const filePath = `${user.id}/${certId}.html`;
     const { error: uploadError } = await supabaseAdmin.storage
       .from("certificates")
@@ -209,9 +212,10 @@ Deno.serve(async (req) => {
         .from("certificates")
         .getPublicUrl(filePath);
       pdfUrl = urlData?.publicUrl || null;
+    } else {
+      console.error("Certificate upload error:", uploadError);
     }
 
-    // Create certificate record
     const { data: cert, error: certError } = await supabaseAdmin
       .from("certificates")
       .insert({
@@ -225,7 +229,8 @@ Deno.serve(async (req) => {
       .single();
 
     if (certError) {
-      return new Response(JSON.stringify({ error: certError.message }), {
+      console.error("Certificate insert error:", certError);
+      return new Response(JSON.stringify({ error: "Failed to generate certificate. Please try again." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -236,7 +241,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("Error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: "An unexpected error occurred. Please try again." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
