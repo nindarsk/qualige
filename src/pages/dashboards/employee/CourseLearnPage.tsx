@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import {
   ChevronLeft, ChevronRight, CheckCircle2, Circle, BookOpen, Loader2, ClipboardList,
 } from "lucide-react";
+import { logAuditEvent } from "@/lib/audit-log";
 
 interface Module {
   id: string;
