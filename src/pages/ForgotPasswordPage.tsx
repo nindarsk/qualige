@@ -7,8 +7,10 @@ import { Label } from "@/components/ui/label";
 import { BookOpen, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 const ForgotPasswordPage = () => {
+  usePageTitle("Forgot Password");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);

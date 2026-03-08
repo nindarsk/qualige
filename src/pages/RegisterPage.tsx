@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { isPasswordLeaked } from "@/lib/check-leaked-password";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 const registerSchema = z
   .object({
@@ -39,6 +40,7 @@ const registerSchema = z
 type RegisterForm = z.infer<typeof registerSchema>;
 
 const RegisterPage = () => {
+  usePageTitle("Create Account");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();

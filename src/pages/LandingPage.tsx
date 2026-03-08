@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 
 const LandingPage = () => {
+  usePageTitle("AI Learning Management System for Banks");
   const { session, role, loading } = useAuth();
   const { t } = useTranslation();
 

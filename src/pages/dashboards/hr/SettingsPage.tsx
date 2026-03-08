@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Loader2, Save, Upload } from "lucide-react";
 import TwoFactorSetup from "@/components/TwoFactorSetup";
 import { useTranslation } from "react-i18next";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 interface OrgSettings {
   name: string;
@@ -29,6 +30,7 @@ const INDUSTRIES = ["Banking", "Insurance", "Microfinance", "Fintech", "Other"];
 const LANGUAGES = ["English", "Georgian", "Russian"];
 
 const SettingsPage = () => {
+  usePageTitle("Settings");
   const { organizationId } = useAuth();
   const { t } = useTranslation();
   const { toast } = useToast();

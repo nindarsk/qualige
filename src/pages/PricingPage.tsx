@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import RequestDemoModal from "@/components/RequestDemoModal";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 const plans = [
   {
@@ -60,6 +61,7 @@ const plans = [
 ];
 
 const PricingPage = () => {
+  usePageTitle("Plans & Pricing");
   const [annual, setAnnual] = useState(false);
   const { session } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);

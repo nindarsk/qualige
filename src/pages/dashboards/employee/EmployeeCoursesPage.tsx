@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Loader2, BookOpen, Award, Calendar, PlayCircle } from "lucide-react";
 import WelcomeBanner from "@/components/WelcomeBanner";
 import { useTranslation } from "react-i18next";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 interface Assignment {
   id: string;
@@ -27,6 +28,7 @@ interface Assignment {
 }
 
 const EmployeeCoursesPage = () => {
+  usePageTitle("My Courses");
   const { user, fullName } = useAuth();
   const { t } = useTranslation();
   const [assignments, setAssignments] = useState<Assignment[]>([]);

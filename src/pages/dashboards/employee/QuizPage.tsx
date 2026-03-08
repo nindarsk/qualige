@@ -9,6 +9,7 @@ import { Loader2, ChevronRight, Send } from "lucide-react";
 import { logAuditEvent } from "@/lib/audit-log";
 import { useTranslation } from "react-i18next";
 import QuizOptionCard from "@/components/quiz/QuizOptionCard";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 interface Question {
   id: string;
@@ -18,6 +19,7 @@ interface Question {
 }
 
 const QuizPage = () => {
+  usePageTitle();
   const { courseId } = useParams<{ courseId: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();

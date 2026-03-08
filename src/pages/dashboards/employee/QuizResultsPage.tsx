@@ -10,6 +10,7 @@ import { CheckCircle2, XCircle, Award, RotateCcw, Home, Download, Loader2 } from
 import { cn } from "@/lib/utils";
 import { logAuditEvent } from "@/lib/audit-log";
 import { useTranslation } from "react-i18next";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 interface AnswerDetail {
   question_id: string;
@@ -21,6 +22,7 @@ interface AnswerDetail {
 }
 
 const QuizResultsPage = () => {
+  usePageTitle();
   const { courseId } = useParams<{ courseId: string }>();
   const { user } = useAuth();
   const location = useLocation();

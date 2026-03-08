@@ -12,6 +12,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Loader2, Building2, Users, BookOpen, Award, Zap, CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 interface OrgRow {
   id: string;
@@ -36,6 +37,7 @@ interface PlatformStats {
 const PLANS = ["pilot", "starter", "growth", "scale"];
 
 const OrganizationsPage = () => {
+  usePageTitle("Organizations | Super Admin");
   const { toast } = useToast();
   const [orgs, setOrgs] = useState<OrgRow[]>([]);
   const [stats, setStats] = useState<PlatformStats>({ totalOrgs: 0, totalEmployees: 0, totalCourses: 0, totalCerts: 0 });

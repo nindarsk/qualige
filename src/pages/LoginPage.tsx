@@ -10,8 +10,10 @@ import { useToast } from "@/hooks/use-toast";
 import { logAuditEvent } from "@/lib/audit-log";
 import { useTranslation } from "react-i18next";
 import TwoFactorVerify from "@/components/TwoFactorVerify";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 const LoginPage = () => {
+  usePageTitle("Log In");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);

@@ -16,6 +16,7 @@ import { downloadCertificate } from "@/lib/download-certificate";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import jsPDF from "jspdf";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 interface ReportRow {
   employeeName: string;
@@ -68,6 +69,7 @@ const AUDIT_ACTIONS = [
 ];
 
 const ReportsPage = () => {
+  usePageTitle("Reports");
   const { organizationId, organizationName } = useAuth();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<ReportRow[]>([]);

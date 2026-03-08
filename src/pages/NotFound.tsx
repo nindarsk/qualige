@@ -1,8 +1,10 @@
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 const NotFound = () => {
+  usePageTitle("Page Not Found");
   const location = useLocation();
   const { t } = useTranslation();
 
