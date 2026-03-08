@@ -137,36 +137,37 @@ const QuizResultsPage = () => {
         </Card>
 
         {/* Answer Breakdown */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           <h2 className="text-lg font-semibold text-foreground">{t("quiz.questionBreakdown")}</h2>
           {answers.map((a, idx) => (
             <Card key={a.question_id} className={cn(
               "border-l-4",
               a.is_correct ? "border-l-primary" : "border-l-destructive"
             )}>
-              <CardContent className="py-4">
-                <div className="flex items-start gap-3">
+              <CardContent className="py-5">
+                <div className="flex items-start gap-3 mb-4">
                   {a.is_correct ? (
                     <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
                   ) : (
                     <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
                   )}
-                  <div className="flex-1">
-                    <p className="font-medium text-foreground">
-                      {idx + 1}. {a.question}
+                  <p className="font-medium text-foreground">
+                    {idx + 1}. {a.question}
+                  </p>
+                </div>
+
+                <div className="ml-8 space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    {t("quiz.yourAnswer")}: <span className={a.is_correct ? "text-primary font-medium" : "text-destructive font-medium"}>{a.user_answer || t("quiz.notAnswered")}</span>
+                  </p>
+                  {!a.is_correct && (
+                    <p className="text-sm text-muted-foreground">
+                      {t("quiz.correctAnswer")}: <span className="text-primary font-medium">{a.correct_answer}</span>
                     </p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {t("quiz.yourAnswer")}: <span className={a.is_correct ? "text-primary font-medium" : "text-destructive font-medium"}>{a.user_answer || t("quiz.notAnswered")}</span>
-                    </p>
-                    {!a.is_correct && (
-                      <p className="text-sm text-muted-foreground">
-                        {t("quiz.correctAnswer")}: <span className="text-primary font-medium">{a.correct_answer}</span>
-                      </p>
-                    )}
-                    {a.explanation && (
-                      <p className="mt-2 text-sm text-muted-foreground italic">{a.explanation}</p>
-                    )}
-                  </div>
+                  )}
+                  {a.explanation && (
+                    <p className="mt-2 text-sm text-muted-foreground italic">{a.explanation}</p>
+                  )}
                 </div>
               </CardContent>
             </Card>

@@ -446,7 +446,7 @@ const CourseReviewPage = () => {
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div className="flex flex-col gap-3">
                 {q.options.map((opt, oi) => {
                   const letter = String.fromCharCode(65 + oi);
                   const isCorrect = q.correct_answer === letter;
@@ -454,16 +454,16 @@ const CourseReviewPage = () => {
                     <div
                       key={oi}
                       className={cn(
-                        "flex items-center gap-2 rounded-md border p-2",
-                        isCorrect ? "border-accent bg-accent/10" : "border-border"
+                        "flex items-start gap-3.5 rounded-xl border-2 px-5 py-4 min-h-[56px] h-auto transition-all duration-200",
+                        isCorrect ? "border-[#059669] bg-[#F0FDF4]" : "border-[#E5E7EB] bg-white"
                       )}
                     >
                       <button
                         type="button"
                         onClick={() => updateQuestion(q.id, "correct_answer", letter)}
                         className={cn(
-                          "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-                          isCorrect ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"
+                          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-colors duration-200",
+                          isCorrect ? "bg-[#059669] text-white" : "bg-[#F3F4F6] text-gray-500"
                         )}
                       >
                         {letter}
@@ -475,7 +475,7 @@ const CourseReviewPage = () => {
                           updated[oi] = `${letter}. ${e.target.value}`;
                           updateQuestion(q.id, "options", updated);
                         }}
-                        className="border-none bg-transparent p-0 h-auto focus-visible:ring-0 text-sm"
+                        className="flex-1 border-none bg-transparent p-0 h-auto focus-visible:ring-0 text-sm break-words"
                       />
                     </div>
                   );
