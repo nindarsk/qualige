@@ -11,7 +11,7 @@ const corsHeaders = {
 };
 
 const ALLOWED_CATEGORIES = ["Compliance", "Safety", "HR", "IT", "Operations", "Finance", "Sales", "Marketing", "Leadership", "Other", "General"];
-const ALLOWED_LANGUAGES = ["English", "French", "Spanish", "German", "Arabic", "Portuguese", "Chinese", "Japanese", "Korean", "Hindi", "Dutch", "Italian", "Russian", "Turkish"];
+const ALLOWED_LANGUAGES = ["English", "French", "Spanish", "German", "Arabic", "Portuguese", "Chinese", "Japanese", "Korean", "Hindi", "Dutch", "Italian", "Russian", "Turkish", "Georgian"];
 
 function validateInput(input: { filePath?: string; youtubeUrl?: string; category?: string; language?: string }) {
   if (!input.filePath && !input.youtubeUrl) {
