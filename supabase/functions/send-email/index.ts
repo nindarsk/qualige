@@ -25,16 +25,38 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      // Check if this is a service-role call (from other edge functions like scheduled-notifications)
+      const token = authHeader.replace("Bearer ", "");
+      if (token !== serviceRoleKey) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    // If authenticated as a user, verify they have hr_admin or super_admin role
+    if (user) {
+      const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+      const { data: roleData } = await supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .in("role", ["hr_admin", "super_admin"]);
+
+      if (!roleData || roleData.length === 0) {
+        return new Response(JSON.stringify({ error: "Forbidden: insufficient permissions" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     const resendKey = Deno.env.get("RESEND_API_KEY");
