@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
             email: emp.email,
             full_name: emp.name,
             organization_id: orgId,
-            user_id: u.user.id,
+            user_id: empUserId,
             status: "active",
             department: "საბანკო ოპერაციები",
             joined_at: new Date().toISOString(),
