@@ -32,21 +32,13 @@ const CATEGORIES = [
 
 const LANGUAGES = ["English", "Georgian", "Russian"];
 
-const LOADING_MESSAGES_FILE = [
-  "Analyzing your content...",
-  "Identifying key learning objectives...",
-  "Structuring course modules...",
-  "Generating quiz questions...",
-  "Almost ready...",
-];
-
-const LOADING_MESSAGES_YOUTUBE = [
-  "Extracting video transcript...",
-  "Analyzing transcript content...",
-  "Identifying key learning objectives...",
-  "Structuring course modules...",
-  "Generating quiz questions...",
-  "Almost ready...",
+const LOADING_STEPS = [
+  { key: "analyzing", progressEnd: 20 },
+  { key: "identifying", progressEnd: 40 },
+  { key: "structuring", progressEnd: 55 },
+  { key: "creatingSlides", progressEnd: 70 },
+  { key: "generatingImages", progressEnd: 90 },
+  { key: "finalizing", progressEnd: 100 },
 ];
 
 const UploadCoursePage = () => {
