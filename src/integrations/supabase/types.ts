@@ -207,8 +207,10 @@ export type Database = {
           course_id: string
           created_at: string
           id: string
+          image_url: string | null
           key_points: string[] | null
           module_number: number
+          slides: Json | null
           title: string
         }
         Insert: {
@@ -216,8 +218,10 @@ export type Database = {
           course_id: string
           created_at?: string
           id?: string
+          image_url?: string | null
           key_points?: string[] | null
           module_number: number
+          slides?: Json | null
           title: string
         }
         Update: {
@@ -225,8 +229,10 @@ export type Database = {
           course_id?: string
           created_at?: string
           id?: string
+          image_url?: string | null
           key_points?: string[] | null
           module_number?: number
+          slides?: Json | null
           title?: string
         }
         Relationships: [
@@ -247,6 +253,7 @@ export type Database = {
           course_id: string
           created_at: string
           current_module: number
+          current_slide: number | null
           employee_id: string
           id: string
           started_at: string
@@ -259,6 +266,7 @@ export type Database = {
           course_id: string
           created_at?: string
           current_module?: number
+          current_slide?: number | null
           employee_id: string
           id?: string
           started_at?: string
@@ -271,6 +279,7 @@ export type Database = {
           course_id?: string
           created_at?: string
           current_module?: number
+          current_slide?: number | null
           employee_id?: string
           id?: string
           started_at?: string

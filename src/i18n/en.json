@@ -203,11 +203,14 @@
     "reviewCourse": "Review your new course.",
     "generationFailed": "Generation failed",
     "loadingMessages": {
-      "analyzing": "Analyzing your content...",
+      "analyzing": "Analyzing your document...",
       "identifying": "Identifying key learning objectives...",
       "structuring": "Structuring course modules...",
-      "generatingQuiz": "Generating quiz questions...",
-      "almostReady": "Almost ready..."
+      "creatingSlides": "Creating presentation slides...",
+      "generatingImages": "Generating visual illustrations...",
+      "finalizing": "Finalizing your course...",
+      "almostReady": "Almost ready...",
+      "takingLong": "This may take up to a minute"
     }
   },
   "employees": {
@@ -346,7 +349,19 @@
     "nextModule": "Next Module",
     "takeQuiz": "Take Quiz",
     "backToDashboard": "← Back to Dashboard",
-    "courseNotAssigned": "Course not assigned"
+    "courseNotAssigned": "Course not assigned",
+    "prevSlide": "Previous",
+    "nextSlide": "Next",
+    "completeModule": "Complete Module",
+    "completeAllSlides": "Complete all slides to continue",
+    "welcomeBack": "Welcome back! Continuing from where you left off.",
+    "previewMode": "Preview Mode — changes are not saved",
+    "previewAsEmployee": "Preview as Employee",
+    "slides": "slides",
+    "imageGenerated": "Generated",
+    "imagePending": "Pending",
+    "imageFailed": "Failed",
+    "regenerateImage": "Regenerate Image"
   },
   "quiz": {
     "questionOf": "Question {{current}} of {{total}}",

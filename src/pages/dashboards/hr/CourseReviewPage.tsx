@@ -10,8 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp, Trash2, Plus, Check, Save, Rocket, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ChevronDown, ChevronUp, Trash2, Plus, Check, Save, Rocket, Loader2, Eye, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
+import CoursePreviewModal from "@/components/slideshow/CoursePreviewModal";
 
 interface Course {
   id: string;
@@ -30,6 +33,8 @@ interface Module {
   title: string;
   content: string;
   key_points: string[];
+  slides: any[] | null;
+  image_url: string | null;
 }
 
 interface QuizQuestion {
@@ -45,6 +50,7 @@ const CourseReviewPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const [course, setCourse] = useState<Course | null>(null);
   const [modules, setModules] = useState<Module[]>([]);
@@ -52,6 +58,7 @@ const CourseReviewPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     if (id) fetchCourse();
@@ -269,6 +276,10 @@ const CourseReviewPage = () => {
           <Badge variant={course.status === "published" ? "default" : "outline"}>
             {course.status}
           </Badge>
+          <Button variant="outline" size="sm" onClick={() => setShowPreview(true)}>
+            <Eye className="mr-2 h-4 w-4" />
+            {t("learn.previewAsEmployee")}
+          </Button>
         </div>
       </div>
 
@@ -308,9 +319,26 @@ const CourseReviewPage = () => {
               <CollapsibleTrigger asChild>
                 <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">
-                      Module {mod.module_number}: {mod.title}
-                    </CardTitle>
+                    <div>
+                      <CardTitle className="text-base">
+                        Module {mod.module_number}: {mod.title}
+                      </CardTitle>
+                      <div className="flex items-center gap-3 mt-1">
+                        {mod.slides && (
+                          <span className="text-xs text-muted-foreground">
+                            {mod.slides.length} {t("learn.slides")}
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1 text-xs">
+                          <ImageIcon className="h-3 w-3" />
+                          {mod.image_url ? (
+                            <span className="text-green-600">{t("learn.imageGenerated")}</span>
+                          ) : (
+                            <span className="text-muted-foreground">{t("learn.imagePending")}</span>
+                          )}
+                        </span>
+                      </div>
+                    </div>
                     <div className="flex items-center gap-2">
                       <Button
                         variant="ghost"
@@ -459,6 +487,16 @@ const CourseReviewPage = () => {
           </Button>
         </div>
       </div>
+
+      {/* Preview Modal */}
+      {course && (
+        <CoursePreviewModal
+          open={showPreview}
+          onOpenChange={setShowPreview}
+          modules={modules}
+          courseTitle={course.title}
+        />
+      )}
     </div>
   );
 };

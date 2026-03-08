@@ -346,7 +346,19 @@
     "nextModule": "Следующий модуль",
     "takeQuiz": "Пройти тест",
     "backToDashboard": "← Назад к панели",
-    "courseNotAssigned": "Курс не назначен"
+    "courseNotAssigned": "Курс не назначен",
+    "prevSlide": "Назад",
+    "nextSlide": "Далее",
+    "completeModule": "Завершить модуль",
+    "completeAllSlides": "Просмотрите все слайды для продолжения",
+    "welcomeBack": "С возвращением! Продолжаем с того места, где вы остановились.",
+    "previewMode": "Режим предпросмотра — изменения не сохраняются",
+    "previewAsEmployee": "Предпросмотр как сотрудник",
+    "slides": "слайды",
+    "imageGenerated": "Создано",
+    "imagePending": "Ожидание",
+    "imageFailed": "Ошибка",
+    "regenerateImage": "Перегенерировать изображение"
   },
   "quiz": {
     "questionOf": "Вопрос {{current}} из {{total}}",

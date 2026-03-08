@@ -1,16 +1,26 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import {
-  ChevronLeft, ChevronRight, CheckCircle2, Circle, BookOpen, Loader2, ClipboardList,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardList, Loader2 } from "lucide-react";
 import { logAuditEvent } from "@/lib/audit-log";
 import { useTranslation } from "react-i18next";
+import { useIsMobile } from "@/hooks/use-mobile";
+import SlideView from "@/components/slideshow/SlideView";
+import SlideNavigation from "@/components/slideshow/SlideNavigation";
+import ModuleSidebar from "@/components/slideshow/ModuleSidebar";
+
+interface Slide {
+  slide_number: number;
+  title: string;
+  bullets: string[];
+  image_prompt?: string;
+}
 
 interface Module {
   id: string;
@@ -18,6 +28,8 @@ interface Module {
   title: string;
   content: string;
   key_points: string[] | null;
+  slides: Slide[] | null;
+  image_url: string | null;
 }
 
 const CourseLearnPage = () => {
@@ -26,38 +38,52 @@ const CourseLearnPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
 
   const [modules, setModules] = useState<Module[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentSlide, setCurrentSlide] = useState(0);
   const [completedModules, setCompletedModules] = useState<Set<string>>(new Set());
   const [courseTitle, setCourseTitle] = useState("");
   const [employeeId, setEmployeeId] = useState<string | null>(null);
   const [assignmentId, setAssignmentId] = useState<string | null>(null);
   const [progressId, setProgressId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [slideDirection, setSlideDirection] = useState<"left" | "right" | "none">("none");
+  const [hasReachedLastSlide, setHasReachedLastSlide] = useState(false);
+  const [isResuming, setIsResuming] = useState(false);
+
+  // Swipe detection
+  const touchStartX = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
+
+  const currentModule = modules[currentIndex];
+  const slides = currentModule?.slides || [];
+  const hasSlides = slides.length > 0;
+  const totalSlides = hasSlides ? slides.length : 1;
 
   useEffect(() => {
     if (user && courseId) loadCourse();
   }, [user, courseId]);
 
-  const loadCourse = async () => {
-    const { data: emp } = await supabase
-      .from("employees")
-      .select("id")
-      .eq("user_id", user!.id)
-      .single();
+  // Track when user reaches last slide
+  useEffect(() => {
+    if (currentSlide >= totalSlides - 1) {
+      setHasReachedLastSlide(true);
+    }
+  }, [currentSlide, totalSlides]);
 
+  // Reset slide state when changing modules
+  useEffect(() => {
+    setHasReachedLastSlide(false);
+  }, [currentIndex]);
+
+  const loadCourse = async () => {
+    const { data: emp } = await supabase.from("employees").select("id").eq("user_id", user!.id).single();
     if (!emp) { setLoading(false); return; }
     setEmployeeId(emp.id);
 
-    const { data: assign } = await supabase
-      .from("course_assignments")
-      .select("id")
-      .eq("course_id", courseId!)
-      .eq("employee_id", emp.id)
-      .single();
-
+    const { data: assign } = await supabase.from("course_assignments").select("id").eq("course_id", courseId!).eq("employee_id", emp.id).single();
     if (!assign) {
       toast({ title: t("learn.courseNotAssigned"), variant: "destructive" });
       navigate("/employee");
@@ -71,90 +97,87 @@ const CourseLearnPage = () => {
     ]);
 
     setCourseTitle(courseRes.data?.title || "");
-    setModules(modulesRes.data || []);
+    const mods = (modulesRes.data || []).map((m: any) => ({
+      ...m,
+      slides: m.slides || null,
+      image_url: m.image_url || null,
+    }));
+    setModules(mods);
 
-    const { data: prog } = await supabase
-      .from("course_progress")
-      .select("*")
-      .eq("assignment_id", assign.id)
-      .maybeSingle();
+    const { data: prog } = await supabase.from("course_progress").select("*").eq("assignment_id", assign.id).maybeSingle();
 
     if (prog) {
       setProgressId(prog.id);
       setCompletedModules(new Set((prog.completed_modules as string[]) || []));
       const idx = Math.max(0, (prog.current_module || 1) - 1);
       setCurrentIndex(idx);
+      const savedSlide = (prog as any).current_slide || 0;
+      setCurrentSlide(savedSlide);
+      if (idx > 0 || savedSlide > 0) {
+        setIsResuming(true);
+        setTimeout(() => setIsResuming(false), 3000);
+      }
     } else {
-      const { data: newProg } = await supabase
-        .from("course_progress")
-        .insert({
-          assignment_id: assign.id,
-          employee_id: emp.id,
-          course_id: courseId!,
-          current_module: 1,
-          completed_modules: [],
-        })
-        .select()
-        .single();
+      const { data: newProg } = await supabase.from("course_progress").insert({
+        assignment_id: assign.id,
+        employee_id: emp.id,
+        course_id: courseId!,
+        current_module: 1,
+        completed_modules: [],
+        current_slide: 0,
+      } as any).select().single();
 
       if (newProg) setProgressId(newProg.id);
-
-      await supabase
-        .from("course_assignments")
-        .update({ status: "in_progress" })
-        .eq("id", assign.id);
-
+      await supabase.from("course_assignments").update({ status: "in_progress" }).eq("id", assign.id);
       logAuditEvent({ action: "COURSE_STARTED", details: `Employee started: ${courseRes.data?.title || "Course"}` });
     }
 
     setLoading(false);
   };
 
-  const saveProgress = useCallback(async (newCompleted: Set<string>, newIndex: number) => {
+  const saveProgress = useCallback(async (newCompleted: Set<string>, newIndex: number, slideNum: number) => {
     if (!progressId) return;
-    await supabase
-      .from("course_progress")
-      .update({
-        current_module: newIndex + 1,
-        completed_modules: Array.from(newCompleted),
-      })
-      .eq("id", progressId);
+    await supabase.from("course_progress").update({
+      current_module: newIndex + 1,
+      completed_modules: Array.from(newCompleted),
+      current_slide: slideNum,
+    } as any).eq("id", progressId);
   }, [progressId]);
 
-  const markCurrentComplete = useCallback(() => {
-    if (!modules[currentIndex]) return;
-    const id = modules[currentIndex].id;
-    setCompletedModules((prev) => {
-      const next = new Set(prev);
-      next.add(id);
-      return next;
-    });
-  }, [currentIndex, modules]);
+  const goToSlide = (slideIdx: number) => {
+    if (slideIdx < 0 || slideIdx >= totalSlides) return;
+    setSlideDirection(slideIdx > currentSlide ? "left" : "right");
+    setCurrentSlide(slideIdx);
+    saveProgress(completedModules, currentIndex, slideIdx);
+  };
 
-  const goToModule = (index: number) => {
-    markCurrentComplete();
+  const markAndGoModule = (index: number) => {
+    if (index < 0 || index >= modules.length) return;
     const newCompleted = new Set(completedModules);
-    if (modules[currentIndex]) newCompleted.add(modules[currentIndex].id);
+    if (currentModule) newCompleted.add(currentModule.id);
+    setCompletedModules(newCompleted);
+    setSlideDirection(index > currentIndex ? "left" : "right");
     setCurrentIndex(index);
-    saveProgress(newCompleted, index);
+    setCurrentSlide(0);
+    setHasReachedLastSlide(false);
+    saveProgress(newCompleted, index, 0);
   };
 
-  const goNext = () => {
-    if (currentIndex < modules.length - 1) {
-      goToModule(currentIndex + 1);
-    }
-  };
+  const canGoNextModule = hasReachedLastSlide || completedModules.has(currentModule?.id);
 
-  const goPrev = () => {
-    if (currentIndex > 0) {
-      goToModule(currentIndex - 1);
+  // Swipe handlers
+  const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.changedTouches[0].screenX; };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    touchEndX.current = e.changedTouches[0].screenX;
+    const diff = touchStartX.current - touchEndX.current;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0 && currentSlide < totalSlides - 1) goToSlide(currentSlide + 1);
+      else if (diff < 0 && currentSlide > 0) goToSlide(currentSlide - 1);
     }
   };
 
   const isLastModule = currentIndex === modules.length - 1;
-  const overallProgress = modules.length > 0
-    ? Math.round(((completedModules.size + (completedModules.has(modules[currentIndex]?.id) ? 0 : 0)) / modules.length) * 100)
-    : 0;
+  const overallProgress = modules.length > 0 ? Math.round((completedModules.size / modules.length) * 100) : 0;
 
   if (loading) {
     return (
@@ -164,117 +187,162 @@ const CourseLearnPage = () => {
     );
   }
 
-  const currentModule = modules[currentIndex];
+  // Fallback slide for modules without slides data
+  const fallbackSlide: Slide = currentModule
+    ? {
+        slide_number: 1,
+        title: currentModule.title,
+        bullets: currentModule.key_points?.length
+          ? currentModule.key_points
+          : currentModule.content.split("\n").filter(Boolean).slice(0, 5),
+      }
+    : { slide_number: 1, title: "", bullets: [] };
+
+  const activeSlide = hasSlides ? slides[currentSlide] : fallbackSlide;
 
   return (
-    <div className="fixed inset-0 z-50 flex bg-background">
-      {/* Sidebar */}
-      <aside
-        className={cn(
-          "flex w-72 flex-col border-r border-border bg-card transition-all duration-300",
-          sidebarOpen ? "translate-x-0" : "-translate-x-72"
-        )}
-      >
-        <div className="flex items-center gap-2 border-b border-border p-4">
-          <BookOpen className="h-5 w-5 text-primary" />
-          <h2 className="text-sm font-bold text-foreground truncate">{courseTitle}</h2>
-        </div>
-        <nav className="flex-1 overflow-y-auto p-2">
-          {modules.map((mod, idx) => {
-            const isComplete = completedModules.has(mod.id);
-            const isCurrent = idx === currentIndex;
-            return (
-              <button
-                key={mod.id}
-                onClick={() => goToModule(idx)}
-                className={cn(
-                  "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
-                  isCurrent
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-muted-foreground hover:bg-muted"
-                )}
-              >
-                {isComplete ? (
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
-                ) : (
-                  <Circle className="h-4 w-4 shrink-0" />
-                )}
-                <span className="truncate">{mod.title}</span>
-              </button>
-            );
-          })}
-        </nav>
-        <div className="border-t border-border p-4">
-          <Button variant="outline" className="w-full" asChild>
-            <Link to="/employee">{t("learn.backToDashboard")}</Link>
-          </Button>
-        </div>
-      </aside>
+    <div className="fixed inset-0 z-50 flex flex-col sm:flex-row bg-background">
+      {/* Sidebar / Mobile dropdown */}
+      {!isMobile && (
+        <ModuleSidebar
+          modules={modules}
+          currentIndex={currentIndex}
+          completedModules={completedModules}
+          courseTitle={courseTitle}
+          onSelectModule={markAndGoModule}
+          isMobile={false}
+          t={t}
+        />
+      )}
 
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Progress bar */}
-        <div className="border-b border-border bg-card px-6 py-3">
+        {/* Mobile module selector */}
+        {isMobile && (
+          <ModuleSidebar
+            modules={modules}
+            currentIndex={currentIndex}
+            completedModules={completedModules}
+            courseTitle={courseTitle}
+            onSelectModule={markAndGoModule}
+            isMobile={true}
+            t={t}
+          />
+        )}
+
+        {/* Top bar */}
+        <div className="border-b border-border bg-card px-4 sm:px-6 py-3">
           <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-            <span>{t("learn.moduleOf", { current: currentIndex + 1, total: modules.length })}</span>
-            <span>{t("learn.percentComplete", { percent: overallProgress })}</span>
+            <span className="font-medium text-foreground truncate mr-4">{courseTitle}</span>
+            <span className="shrink-0">
+              {t("learn.moduleOf", { current: currentIndex + 1, total: modules.length })}
+            </span>
           </div>
           <Progress value={overallProgress} className="h-2" />
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto px-6 py-8 lg:px-16">
+        {/* Resume toast */}
+        {isResuming && (
+          <div className="mx-4 sm:mx-6 mt-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-2 text-sm text-primary animate-fade-in">
+            {t("learn.welcomeBack")}
+          </div>
+        )}
+
+        {/* Slide content */}
+        <div
+          className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-16 py-6"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           {currentModule && (
             <div className="mx-auto max-w-3xl">
-              <h1 className="mb-6 text-2xl font-bold text-foreground">{currentModule.title}</h1>
-              <div className="prose prose-slate max-w-none text-foreground/90 leading-relaxed whitespace-pre-wrap">
-                {currentModule.content}
-              </div>
-
-              {currentModule.key_points && currentModule.key_points.length > 0 && (
-                <div className="mt-8 rounded-lg border border-border bg-muted/50 p-6">
-                  <h3 className="mb-3 font-semibold text-foreground">{t("learn.keyPoints")}</h3>
-                  <ul className="space-y-2">
-                    {currentModule.key_points.map((kp, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
-                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                        {kp}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              <SlideView
+                slide={activeSlide}
+                imageUrl={currentModule.image_url}
+                moduleTitle={currentModule.title}
+                moduleNumber={currentModule.module_number}
+                direction={slideDirection}
+              />
             </div>
           )}
         </div>
 
-        {/* Navigation */}
-        <div className="border-t border-border bg-card px-6 py-4">
+        {/* Slide navigation */}
+        {hasSlides && (
+          <div className="border-t border-border bg-card px-4 sm:px-6 py-3">
+            <div className="mx-auto max-w-3xl">
+              <SlideNavigation
+                currentSlide={currentSlide}
+                totalSlides={totalSlides}
+                onPrev={() => goToSlide(currentSlide - 1)}
+                onNext={() => goToSlide(currentSlide + 1)}
+                isLastSlide={currentSlide === totalSlides - 1}
+                onCompleteModule={() => {
+                  setHasReachedLastSlide(true);
+                  if (!isLastModule) markAndGoModule(currentIndex + 1);
+                  else {
+                    const newCompleted = new Set(completedModules);
+                    if (currentModule) newCompleted.add(currentModule.id);
+                    setCompletedModules(newCompleted);
+                    saveProgress(newCompleted, currentIndex, currentSlide);
+                    navigate(`/employee/learn/${courseId}/quiz`);
+                  }
+                }}
+                t={t}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Module navigation */}
+        <div className="border-t border-border bg-card px-4 sm:px-6 py-4">
           <div className="mx-auto flex max-w-3xl items-center justify-between">
-            <Button
-              variant="outline"
-              onClick={goPrev}
-              disabled={currentIndex === 0}
-            >
+            <Button variant="outline" onClick={() => markAndGoModule(currentIndex - 1)} disabled={currentIndex === 0}>
               <ChevronLeft className="mr-2 h-4 w-4" /> {t("learn.previousModule")}
             </Button>
 
             {isLastModule ? (
-              <Button
-                onClick={() => {
-                  markCurrentComplete();
-                  const allComplete = new Set(completedModules);
-                  if (currentModule) allComplete.add(currentModule.id);
-                  saveProgress(allComplete, currentIndex);
-                  navigate(`/employee/learn/${courseId}/quiz`);
-                }}
-              >
-                <ClipboardList className="mr-2 h-4 w-4" /> {t("learn.takeQuiz")}
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Button
+                        onClick={() => {
+                          const newCompleted = new Set(completedModules);
+                          if (currentModule) newCompleted.add(currentModule.id);
+                          saveProgress(newCompleted, currentIndex, currentSlide);
+                          navigate(`/employee/learn/${courseId}/quiz`);
+                        }}
+                        disabled={!canGoNextModule}
+                      >
+                        <ClipboardList className="mr-2 h-4 w-4" /> {t("learn.takeQuiz")}
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  {!canGoNextModule && (
+                    <TooltipContent>
+                      <p>{t("learn.completeAllSlides")}</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
             ) : (
-              <Button onClick={goNext}>
-                {t("learn.nextModule")} <ChevronRight className="ml-2 h-4 w-4" />
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Button onClick={() => markAndGoModule(currentIndex + 1)} disabled={!canGoNextModule}>
+                        {t("learn.nextModule")} <ChevronRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  {!canGoNextModule && (
+                    <TooltipContent>
+                      <p>{t("learn.completeAllSlides")}</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
         </div>

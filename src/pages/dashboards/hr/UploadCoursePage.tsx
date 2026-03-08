@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -32,21 +33,13 @@ const CATEGORIES = [
 
 const LANGUAGES = ["English", "Georgian", "Russian"];
 
-const LOADING_MESSAGES_FILE = [
-  "Analyzing your content...",
-  "Identifying key learning objectives...",
-  "Structuring course modules...",
-  "Generating quiz questions...",
-  "Almost ready...",
-];
-
-const LOADING_MESSAGES_YOUTUBE = [
-  "Extracting video transcript...",
-  "Analyzing transcript content...",
-  "Identifying key learning objectives...",
-  "Structuring course modules...",
-  "Generating quiz questions...",
-  "Almost ready...",
+const LOADING_STEPS = [
+  { key: "analyzing", progressEnd: 20 },
+  { key: "identifying", progressEnd: 40 },
+  { key: "structuring", progressEnd: 55 },
+  { key: "creatingSlides", progressEnd: 70 },
+  { key: "generatingImages", progressEnd: 90 },
+  { key: "finalizing", progressEnd: 100 },
 ];
 
 const UploadCoursePage = () => {
@@ -95,22 +88,24 @@ const UploadCoursePage = () => {
       return;
     }
 
-    const isYoutube = !file && !!youtubeUrl.trim();
-    const loadingMessages = isYoutube ? LOADING_MESSAGES_YOUTUBE : LOADING_MESSAGES_FILE;
-
     setIsGenerating(true);
     setProgress(0);
     setLoadingMsgIndex(0);
 
-    // Cycle loading messages
+    // Cycle loading steps with appropriate timing
+    const stepDuration = 8000; // 8s per step
     const msgInterval = setInterval(() => {
-      setLoadingMsgIndex((prev) => Math.min(prev + 1, loadingMessages.length - 1));
-    }, 5000);
+      setLoadingMsgIndex((prev) => Math.min(prev + 1, LOADING_STEPS.length - 1));
+    }, stepDuration);
 
-    // Animate progress
+    // Animate progress smoothly toward each step's target
     const progressInterval = setInterval(() => {
-      setProgress((prev) => Math.min(prev + 2, 90));
-    }, 600);
+      setLoadingMsgIndex((prevIdx) => {
+        const target = LOADING_STEPS[Math.min(prevIdx, LOADING_STEPS.length - 1)].progressEnd;
+        setProgress((prev) => Math.min(prev + 1, target - 5));
+        return prevIdx;
+      });
+    }, 400);
 
     try {
       let filePath: string | null = null;
@@ -167,7 +162,11 @@ const UploadCoursePage = () => {
     }
   };
 
+  const { t } = useTranslation();
+
   if (isGenerating) {
+    const currentStep = LOADING_STEPS[loadingMsgIndex];
+    const showLongMessage = progress > 30;
     return (
       <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-8 px-6 text-center">
@@ -177,8 +176,13 @@ const UploadCoursePage = () => {
             <Progress value={progress} className="h-3" />
           </div>
           <p className="text-lg text-muted-foreground animate-pulse">
-            {(youtubeUrl.trim() ? LOADING_MESSAGES_YOUTUBE : LOADING_MESSAGES_FILE)[loadingMsgIndex]}
+            {t(`courses.loadingMessages.${currentStep.key}`)}
           </p>
+          {showLongMessage && (
+            <p className="text-sm text-muted-foreground/70">
+              {t("courses.loadingMessages.takingLong")}
+            </p>
+          )}
         </div>
       </div>
     );
