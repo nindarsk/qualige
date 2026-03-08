@@ -27,6 +27,7 @@ interface CourseRow {
   category: string;
   status: string;
   created_at: string;
+  generation_method?: string;
   module_count?: number;
   question_count?: number;
 }
