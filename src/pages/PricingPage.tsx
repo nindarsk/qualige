@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import RequestDemoModal from "@/components/RequestDemoModal";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const plans = [
   {
@@ -17,7 +19,7 @@ const plans = [
     maxUsers: 50,
     maxCourses: "10",
     popular: false,
-    features: [
+    featureKeys: [
       "AI course generation",
       "Quizzes & assessments",
       "Certificates",
@@ -32,7 +34,7 @@ const plans = [
     maxUsers: 200,
     maxCourses: "Unlimited",
     popular: true,
-    features: [
+    featureKeys: [
       "Everything in Starter",
       "Unlimited courses",
       "Compliance reports",
@@ -47,7 +49,7 @@ const plans = [
     maxUsers: 500,
     maxCourses: "Unlimited",
     popular: false,
-    features: [
+    featureKeys: [
       "Everything in Growth",
       "Custom branding",
       "2FA enforcement",
@@ -61,6 +63,7 @@ const PricingPage = () => {
   const [annual, setAnnual] = useState(false);
   const { session } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen bg-background">
@@ -72,17 +75,18 @@ const PricingPage = () => {
             <span className="text-xl font-bold text-primary">Quali</span>
           </Link>
           <div className="flex items-center gap-3">
+            <LanguageSwitcher />
             {session ? (
               <Button asChild>
-                <Link to="/hr">Dashboard</Link>
+                <Link to="/hr">{t("nav.dashboard")}</Link>
               </Button>
             ) : (
               <>
                 <Button variant="ghost" asChild>
-                  <Link to="/login">Sign In</Link>
+                  <Link to="/login">{t("nav.signIn")}</Link>
                 </Button>
                 <Button asChild className="gradient-gold border-0 text-accent-foreground hover:opacity-90">
-                  <Link to="/register">Get Started</Link>
+                  <Link to="/register">{t("nav.getStarted")}</Link>
                 </Button>
               </>
             )}
@@ -94,24 +98,24 @@ const PricingPage = () => {
       <section className="pt-32 pb-16">
         <div className="container text-center">
           <h1 className="mb-4 text-4xl font-bold text-foreground md:text-5xl">
-            Simple, Transparent Pricing
+            {t("pricing.title")}
           </h1>
           <p className="mx-auto mb-10 max-w-2xl text-lg text-muted-foreground">
-            Choose the plan that fits your organization. All plans include a 14-day free trial.
+            {t("pricing.subtitle")}
           </p>
 
           {/* Annual toggle */}
           <div className="flex items-center justify-center gap-3 mb-12">
             <Label htmlFor="billing-toggle" className={cn("text-sm font-medium", !annual && "text-foreground")}>
-              Monthly
+              {t("pricing.monthly")}
             </Label>
             <Switch id="billing-toggle" checked={annual} onCheckedChange={setAnnual} />
             <Label htmlFor="billing-toggle" className={cn("text-sm font-medium", annual && "text-foreground")}>
-              Annual
+              {t("pricing.annual")}
             </Label>
             {annual && (
               <span className="ml-2 rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold text-accent">
-                Save 20%
+                {t("pricing.save20")}
               </span>
             )}
           </div>
@@ -128,27 +132,27 @@ const PricingPage = () => {
               >
                 {plan.popular && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full gradient-gold px-4 py-1 text-xs font-bold text-accent-foreground">
-                    Most Popular
+                    {t("pricing.mostPopular")}
                   </div>
                 )}
                 <CardHeader className="text-center pb-2">
                   <CardTitle className="text-xl text-foreground">{plan.name}</CardTitle>
-                  <CardDescription>Up to {plan.maxUsers} employees</CardDescription>
+                  <CardDescription>{t("pricing.upToEmployees", { count: plan.maxUsers })}</CardDescription>
                 </CardHeader>
                 <CardContent className="flex-1 text-center">
                   <div className="mb-6">
                     <span className="text-4xl font-bold text-foreground">
                       ${annual ? Math.round(plan.annualPrice / 12) : plan.monthlyPrice}
                     </span>
-                    <span className="text-muted-foreground">/mo</span>
+                    <span className="text-muted-foreground">{t("pricing.perMonth")}</span>
                     {annual && (
                       <p className="mt-1 text-sm text-muted-foreground">
-                        ${plan.annualPrice.toLocaleString()}/year
+                        ${plan.annualPrice.toLocaleString()}{t("pricing.perYear")}
                       </p>
                     )}
                   </div>
                   <ul className="space-y-3 text-left">
-                    {plan.features.map((f) => (
+                    {plan.featureKeys.map((f) => (
                       <li key={f} className="flex items-start gap-2 text-sm text-foreground">
                         <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
                         {f}
@@ -167,7 +171,7 @@ const PricingPage = () => {
                     variant={plan.popular ? "default" : "outline"}
                     onClick={() => setSelectedPlan(plan.name)}
                   >
-                    Request Demo
+                    {t("pricing.requestDemo")}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </CardFooter>

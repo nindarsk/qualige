@@ -9,34 +9,37 @@ import { Input } from "@/components/ui/input";
 import { BookOpen, Loader2, Check, X, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-
-const passwordRequirements = [
-  { label: "Minimum 8 characters", test: (v: string) => v.length >= 8 },
-  { label: "At least one uppercase letter", test: (v: string) => /[A-Z]/.test(v) },
-  { label: "At least one number", test: (v: string) => /[0-9]/.test(v) },
-  { label: "At least one special character (!@#$%^&)*", test: (v: string) => /[!@#$%^&)*]/.test(v) },
-];
-
-const setupSchema = z
-  .object({
-    fullName: z.string().trim().min(1, "This field is required").max(200),
-    password: z
-      .string()
-      .min(1, "This field is required")
-      .min(8, "Password must be at least 8 characters")
-      .regex(/[A-Z]/, "Password must contain an uppercase letter")
-      .regex(/[0-9]/, "Password must contain a number")
-      .regex(/[!@#$%^&)*]/, "Password must contain a special character"),
-    confirmPassword: z.string().min(1, "This field is required"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
-
-type SetupForm = z.infer<typeof setupSchema>;
+import { useTranslation } from "react-i18next";
 
 const InviteAcceptPage = () => {
+  const { t } = useTranslation();
+
+  const passwordRequirements = [
+    { label: t("auth.passwordRequirements.minLength"), test: (v: string) => v.length >= 8 },
+    { label: t("auth.passwordRequirements.uppercase"), test: (v: string) => /[A-Z]/.test(v) },
+    { label: t("auth.passwordRequirements.number"), test: (v: string) => /[0-9]/.test(v) },
+    { label: t("auth.passwordRequirements.special"), test: (v: string) => /[!@#$%^&)*]/.test(v) },
+  ];
+
+  const setupSchema = z
+    .object({
+      fullName: z.string().trim().min(1, t("common.required")).max(200),
+      password: z
+        .string()
+        .min(1, t("common.required"))
+        .min(8)
+        .regex(/[A-Z]/)
+        .regex(/[0-9]/)
+        .regex(/[!@#$%^&)*]/),
+      confirmPassword: z.string().min(1, t("common.required")),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t("auth.passwordsDoNotMatch"),
+      path: ["confirmPassword"],
+    });
+
+  type SetupForm = z.infer<typeof setupSchema>;
+
   const [pageLoading, setPageLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [tokenValid, setTokenValid] = useState(false);
@@ -79,9 +82,9 @@ const InviteAcceptPage = () => {
           if (error) {
             console.error("Token verification error:", error);
             if (error.message?.includes("expired")) {
-              setErrorMessage("This invitation link has expired. Please contact your HR manager to resend the invitation.");
+              setErrorMessage(t("invite.inviteLinkExpired"));
             } else {
-              setErrorMessage("This invitation link is not valid. Please contact your HR manager.");
+              setErrorMessage(t("invite.inviteLinkInvalid"));
             }
             setTokenValid(false);
             setPageLoading(false);
@@ -107,7 +110,7 @@ const InviteAcceptPage = () => {
             });
 
             if (error) {
-              setErrorMessage("This invitation link is not valid. Please contact your HR manager.");
+              setErrorMessage(t("invite.inviteLinkInvalid"));
               setTokenValid(false);
               setPageLoading(false);
               return;
@@ -127,11 +130,11 @@ const InviteAcceptPage = () => {
           return;
         }
 
-        setErrorMessage("This invitation link is not valid or has expired. Please contact your HR manager for a new invitation.");
+        setErrorMessage(t("invite.inviteLinkInvalid"));
         setTokenValid(false);
       } catch (err) {
         console.error("Error processing invite:", err);
-        setErrorMessage("An error occurred while processing your invitation. Please try again or contact your HR manager.");
+        setErrorMessage(t("invite.inviteLinkInvalid"));
         setTokenValid(false);
       } finally {
         setPageLoading(false);
@@ -161,12 +164,11 @@ const InviteAcceptPage = () => {
     };
 
     handleInviteToken();
-  }, [setValue, searchParams]);
+  }, [setValue, searchParams, t]);
 
   const onSubmit = async (data: SetupForm) => {
     setSubmitting(true);
     try {
-      // Set the user's password
       const { error: updateError } = await supabase.auth.updateUser({
         password: data.password,
         data: { full_name: data.fullName },
@@ -181,7 +183,6 @@ const InviteAcceptPage = () => {
       const meta = user.user_metadata || {};
       const orgId = meta.organization_id;
 
-      // Check if profile already exists (trigger may have created one)
       const { data: existingProfile } = await supabase
         .from("profiles")
         .select("id")
@@ -201,7 +202,6 @@ const InviteAcceptPage = () => {
           .eq("user_id", user.id);
       }
 
-      // Check if employee role already exists
       const { data: existingRole } = await supabase
         .from("user_roles")
         .select("id")
@@ -215,7 +215,6 @@ const InviteAcceptPage = () => {
         });
       }
 
-      // Update employee record to active
       if (orgId) {
         const { data: existingEmployee } = await supabase
           .from("employees")
@@ -231,7 +230,6 @@ const InviteAcceptPage = () => {
             .eq("email", user.email!)
             .eq("organization_id", orgId);
         } else {
-          // Edge case: no employee record exists, create one
           await supabase.from("employees").insert({
             email: user.email!,
             full_name: data.fullName,
@@ -243,14 +241,13 @@ const InviteAcceptPage = () => {
         }
       }
 
-      // Show success state, then redirect after 2 seconds
       setSetupComplete(true);
       setTimeout(() => {
         navigate("/employee");
       }, 2000);
     } catch (error: any) {
       toast({
-        title: "Setup failed",
+        title: t("auth.registrationFailed"),
         description: error.message,
         variant: "destructive",
       });
@@ -275,7 +272,7 @@ const InviteAcceptPage = () => {
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
           <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
-          <p className="mt-4 text-muted-foreground">Processing your invitation...</p>
+          <p className="mt-4 text-muted-foreground">{t("invite.processingInvitation")}</p>
         </div>
       </div>
     );
@@ -288,9 +285,9 @@ const InviteAcceptPage = () => {
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
             <AlertTriangle className="h-8 w-8 text-destructive" />
           </div>
-          <h1 className="mb-3 text-2xl font-bold text-foreground">Invalid Invitation</h1>
+          <h1 className="mb-3 text-2xl font-bold text-foreground">{t("invite.invalidInvitation")}</h1>
           <p className="text-muted-foreground">
-            {errorMessage || "This invitation link is invalid or has expired. Please contact your HR manager for a new invitation."}
+            {errorMessage || t("invite.inviteLinkInvalid")}
           </p>
         </div>
       </div>
@@ -304,9 +301,9 @@ const InviteAcceptPage = () => {
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
             <CheckCircle2 className="h-8 w-8 text-emerald-600" />
           </div>
-          <h1 className="mb-3 text-2xl font-bold text-foreground">Account created successfully!</h1>
-          <p className="text-lg text-foreground mb-1">Welcome to Quali.ge.</p>
-          <p className="text-muted-foreground">Redirecting you to your training dashboard...</p>
+          <h1 className="mb-3 text-2xl font-bold text-foreground">{t("invite.accountCreated")}</h1>
+          <p className="text-lg text-foreground mb-1">{t("invite.welcomeRedirect")}</p>
+          <p className="text-muted-foreground">{t("invite.redirecting")}</p>
         </div>
       </div>
     );
@@ -322,10 +319,10 @@ const InviteAcceptPage = () => {
             <span className="text-2xl font-bold text-primary-foreground">Quali</span>
           </div>
           <h2 className="mb-4 text-3xl font-bold text-primary-foreground">
-            Welcome to your training platform
+            {t("invite.welcomeToPlatform")}
           </h2>
           <p className="text-primary-foreground/70">
-            Set up your account to access your assigned courses, track your progress, and earn certificates.
+            {t("invite.setupAccount")}
           </p>
         </div>
       </div>
@@ -338,28 +335,28 @@ const InviteAcceptPage = () => {
             <span className="text-xl font-bold text-primary">Quali</span>
           </div>
 
-          <h1 className="mb-2 text-2xl font-bold text-foreground">Welcome to Quali.ge</h1>
+          <h1 className="mb-2 text-2xl font-bold text-foreground">{t("invite.welcomeToQuali")}</h1>
           {orgName ? (
-            <p className="mb-8 text-muted-foreground">
-              You have been invited by <span className="font-semibold text-foreground">{orgName}</span> to complete your training.
-            </p>
+            <p className="mb-8 text-muted-foreground" dangerouslySetInnerHTML={{
+              __html: t("invite.invitedBy", { orgName })
+            }} />
           ) : (
-            <p className="mb-8 text-muted-foreground">Set up your account to get started.</p>
+            <p className="mb-8 text-muted-foreground">{t("invite.setUpAccount")}</p>
           )}
 
           <form ref={formRef} onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Email (read-only) */}
             <div>
-              <FieldLabel htmlFor="email">Email</FieldLabel>
+              <FieldLabel htmlFor="email">{t("auth.email")}</FieldLabel>
               <Input id="email" type="email" value={userEmail} readOnly className="bg-muted" />
             </div>
 
             {/* Full Name */}
             <div data-error={!!errors.fullName}>
-              <FieldLabel htmlFor="fullName">Full Name</FieldLabel>
+              <FieldLabel htmlFor="fullName">{t("employees.fullName")}</FieldLabel>
               <Input
                 id="fullName"
-                placeholder="Your full name"
+                placeholder={t("employees.fullName")}
                 className={cn(errors.fullName && "border-destructive focus-visible:ring-destructive")}
                 {...register("fullName")}
               />
@@ -368,11 +365,11 @@ const InviteAcceptPage = () => {
 
             {/* Password */}
             <div data-error={!!errors.password}>
-              <FieldLabel htmlFor="password">Create Your Password</FieldLabel>
+              <FieldLabel htmlFor="password">{t("invite.createPassword")}</FieldLabel>
               <Input
                 id="password"
                 type="password"
-                placeholder="Enter your password"
+                placeholder={t("auth.password")}
                 className={cn(errors.password && "border-destructive focus-visible:ring-destructive")}
                 {...register("password")}
               />
@@ -392,12 +389,12 @@ const InviteAcceptPage = () => {
 
             {/* Confirm Password */}
             <div data-error={!!errors.confirmPassword}>
-              <FieldLabel htmlFor="confirmPassword">Confirm Password</FieldLabel>
+              <FieldLabel htmlFor="confirmPassword">{t("auth.confirmPassword")}</FieldLabel>
               <div className="relative">
                 <Input
                   id="confirmPassword"
                   type="password"
-                  placeholder="Confirm your password"
+                  placeholder={t("auth.confirmPassword")}
                   className={cn(
                     errors.confirmPassword && "border-destructive focus-visible:ring-destructive",
                     passwordsMatch && "border-green-500 focus-visible:ring-green-500",
@@ -420,7 +417,7 @@ const InviteAcceptPage = () => {
 
             <Button type="submit" className="w-full" disabled={submitting}>
               {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Set Up My Account
+              {t("invite.setupMyAccount")}
             </Button>
           </form>
         </div>

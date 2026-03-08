@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { Loader2, ChevronRight, CheckCircle2, Send } from "lucide-react";
 import { logAuditEvent } from "@/lib/audit-log";
+import { useTranslation } from "react-i18next";
 
 interface Question {
   id: string;
@@ -22,6 +23,7 @@ const QuizPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQ, setCurrentQ] = useState(0);
@@ -35,7 +37,6 @@ const QuizPage = () => {
   }, [user, courseId]);
 
   const loadQuiz = async () => {
-    // Use the safe view that excludes correct_answer and explanation
     const { data } = await supabase
       .from("quiz_questions_safe" as any)
       .select("id, question_number, question, options")
@@ -65,24 +66,21 @@ const QuizPage = () => {
     setSubmitting(true);
 
     try {
-      // Submit answers to server-side grading function
       const { data: result, error } = await supabase.functions.invoke("grade-quiz", {
         body: { courseId, answers },
       });
 
       if (error || !result) {
-        toast({ title: "Failed to submit quiz", description: error?.message || "Please try again.", variant: "destructive" });
+        toast({ title: t("quiz.failedToSave"), description: error?.message || "", variant: "destructive" });
         setSubmitting(false);
         return;
       }
 
       const { score, passed, correct, total, answers: answerDetails } = result;
 
-      // Get course title for audit log
       const { data: courseData } = await supabase.from("courses").select("title").eq("id", courseId!).single();
       const courseTitle = courseData?.title || "Course";
 
-      // Audit log
       if (passed) {
         logAuditEvent({ action: "QUIZ_PASSED", details: `Score: ${Math.round(score)}% on ${courseTitle}` });
         logAuditEvent({ action: "COURSE_COMPLETED", details: `Employee completed: ${courseTitle}` });
@@ -90,14 +88,12 @@ const QuizPage = () => {
         logAuditEvent({ action: "QUIZ_FAILED", details: `Score: ${Math.round(score)}% on ${courseTitle}` });
       }
 
-      // Completion email is now sent server-side by the grade-quiz function
-
       navigate(`/employee/learn/${courseId}/results`, {
         state: { score, passed, answers: answerDetails, total, correct },
       });
     } catch (err) {
       console.error("Quiz submit error:", err);
-      toast({ title: "Failed to submit quiz", description: "Please try again.", variant: "destructive" });
+      toast({ title: t("quiz.failedToSave"), description: "", variant: "destructive" });
       setSubmitting(false);
     }
   };
@@ -113,9 +109,9 @@ const QuizPage = () => {
   if (questions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
-        <p className="text-muted-foreground">No quiz questions available for this course.</p>
+        <p className="text-muted-foreground">{t("quiz.noQuestions")}</p>
         <Button variant="outline" className="mt-4" onClick={() => navigate("/employee")}>
-          Back to Dashboard
+          {t("quiz.backToDashboard")}
         </Button>
       </div>
     );
@@ -131,7 +127,7 @@ const QuizPage = () => {
       <div className="border-b border-border bg-card px-6 py-4">
         <div className="mx-auto max-w-2xl">
           <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-            <span>Question {currentQ + 1} of {questions.length}</span>
+            <span>{t("quiz.questionOf", { current: currentQ + 1, total: questions.length })}</span>
             <span>{Math.round(progressPct)}%</span>
           </div>
           <Progress value={progressPct} className="h-2" />
@@ -188,7 +184,7 @@ const QuizPage = () => {
             }}
             disabled={currentQ === 0}
           >
-            Previous
+            {t("common.previous")}
           </Button>
 
           {isLast ? (
@@ -201,11 +197,11 @@ const QuizPage = () => {
               ) : (
                 <Send className="mr-2 h-4 w-4" />
               )}
-              Submit Quiz
+              {t("quiz.submitQuiz")}
             </Button>
           ) : (
             <Button onClick={goNext} disabled={!selectedAnswer}>
-              Next Question <ChevronRight className="ml-2 h-4 w-4" />
+              {t("quiz.nextQuestion")} <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
           )}
         </div>
