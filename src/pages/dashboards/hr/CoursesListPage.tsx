@@ -34,6 +34,7 @@ interface CourseRow {
 }
 
 const CoursesListPage = () => {
+  usePageTitle("Courses");
   const navigate = useNavigate();
   const { toast } = useToast();
   const [courses, setCourses] = useState<CourseRow[]>([]);

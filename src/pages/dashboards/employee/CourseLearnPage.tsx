@@ -34,6 +34,7 @@ interface Module {
 }
 
 const CourseLearnPage = () => {
+  usePageTitle();
   const { courseId } = useParams<{ courseId: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();

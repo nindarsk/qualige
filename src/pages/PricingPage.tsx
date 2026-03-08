@@ -61,6 +61,7 @@ const plans = [
 ];
 
 const PricingPage = () => {
+  usePageTitle("Plans & Pricing");
   const [annual, setAnnual] = useState(false);
   const { session } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);

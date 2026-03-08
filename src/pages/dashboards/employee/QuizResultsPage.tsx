@@ -22,6 +22,7 @@ interface AnswerDetail {
 }
 
 const QuizResultsPage = () => {
+  usePageTitle();
   const { courseId } = useParams<{ courseId: string }>();
   const { user } = useAuth();
   const location = useLocation();

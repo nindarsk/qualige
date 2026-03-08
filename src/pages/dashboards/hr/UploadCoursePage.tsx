@@ -39,6 +39,7 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
 ];
 
 const UploadCoursePage = () => {
+  usePageTitle("Create Course");
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();

@@ -30,6 +30,7 @@ const INDUSTRIES = ["Banking", "Insurance", "Microfinance", "Fintech", "Other"];
 const LANGUAGES = ["English", "Georgian", "Russian"];
 
 const SettingsPage = () => {
+  usePageTitle("Settings");
   const { organizationId } = useAuth();
   const { t } = useTranslation();
   const { toast } = useToast();

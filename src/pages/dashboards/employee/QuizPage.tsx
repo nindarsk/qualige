@@ -19,6 +19,7 @@ interface Question {
 }
 
 const QuizPage = () => {
+  usePageTitle();
   const { courseId } = useParams<{ courseId: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();

@@ -18,6 +18,7 @@ interface Cert {
 }
 
 const EmployeeCertificatesPage = () => {
+  usePageTitle("My Certificates");
   const { user } = useAuth();
   const { t } = useTranslation();
   const [certificates, setCertificates] = useState<Cert[]>([]);

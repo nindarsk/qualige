@@ -31,6 +31,7 @@ const planPrices: Record<string, number> = {
 };
 
 const BillingPage = () => {
+  usePageTitle("Billing");
   const { organizationId, organizationName, fullName, user } = useAuth();
   const [billing, setBilling] = useState<OrgBilling | null>(null);
   const [loading, setLoading] = useState(true);

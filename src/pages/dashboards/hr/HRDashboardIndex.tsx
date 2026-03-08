@@ -29,6 +29,7 @@ interface LeaderEntry {
 }
 
 const HRDashboardIndex = () => {
+  usePageTitle("Dashboard");
   const { organizationId } = useAuth();
   const { t } = useTranslation();
   const [stats, setStats] = useState<DashStats>({ totalEmployees: 0, coursesPublished: 0, completionsThisMonth: 0, avgQuizScore: 0 });

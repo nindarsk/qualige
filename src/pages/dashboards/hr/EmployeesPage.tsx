@@ -37,6 +37,7 @@ interface Employee {
 }
 
 const EmployeesPage = () => {
+  usePageTitle("Employees");
   const { user } = useAuth();
   const { toast } = useToast();
   const [employees, setEmployees] = useState<Employee[]>([]);

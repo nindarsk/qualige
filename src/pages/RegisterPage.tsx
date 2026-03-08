@@ -40,6 +40,7 @@ const registerSchema = z
 type RegisterForm = z.infer<typeof registerSchema>;
 
 const RegisterPage = () => {
+  usePageTitle("Create Account");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();

@@ -21,6 +21,7 @@ const TEMPLATE_META: Record<string, { duration: string; modules: number; difficu
 };
 
 const TemplatesPage = () => {
+  usePageTitle("Templates");
   const navigate = useNavigate();
   const [previewTopic, setPreviewTopic] = useState<TopicCard | null>(null);
 

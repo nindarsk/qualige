@@ -37,6 +37,7 @@ interface PlatformStats {
 const PLANS = ["pilot", "starter", "growth", "scale"];
 
 const OrganizationsPage = () => {
+  usePageTitle("Organizations | Super Admin");
   const { toast } = useToast();
   const [orgs, setOrgs] = useState<OrgRow[]>([]);
   const [stats, setStats] = useState<PlatformStats>({ totalOrgs: 0, totalEmployees: 0, totalCourses: 0, totalCerts: 0 });

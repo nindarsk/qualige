@@ -49,6 +49,7 @@ interface QuizQuestion {
 }
 
 const CourseReviewPage = () => {
+  usePageTitle("Review Course");
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();

@@ -28,6 +28,7 @@ interface Assignment {
 }
 
 const EmployeeCoursesPage = () => {
+  usePageTitle("My Courses");
   const { user, fullName } = useAuth();
   const { t } = useTranslation();
   const [assignments, setAssignments] = useState<Assignment[]>([]);

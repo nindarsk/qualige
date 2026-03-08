@@ -69,6 +69,7 @@ const AUDIT_ACTIONS = [
 ];
 
 const ReportsPage = () => {
+  usePageTitle("Reports");
   const { organizationId, organizationName } = useAuth();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<ReportRow[]>([]);
