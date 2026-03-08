@@ -33,6 +33,8 @@ interface Module {
   title: string;
   content: string;
   key_points: string[];
+  slides: any[] | null;
+  image_url: string | null;
 }
 
 interface QuizQuestion {
