@@ -486,6 +486,10 @@ Return JSON only:
     let textContent = "";
 
     if (filePath) {
+      // Ensure the file belongs to the requesting user to prevent cross-user file access
+      if (!filePath.startsWith(`${user.id}/`)) {
+        return new Response(JSON.stringify({ error: "Invalid file path." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
       const { data: fileData, error: downloadError } = await supabaseAdmin.storage.from("course-materials").download(filePath);
       if (downloadError) {
         console.error("File download failed:", downloadError);
