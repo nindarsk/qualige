@@ -319,9 +319,26 @@ const CourseReviewPage = () => {
               <CollapsibleTrigger asChild>
                 <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">
-                      Module {mod.module_number}: {mod.title}
-                    </CardTitle>
+                    <div>
+                      <CardTitle className="text-base">
+                        Module {mod.module_number}: {mod.title}
+                      </CardTitle>
+                      <div className="flex items-center gap-3 mt-1">
+                        {mod.slides && (
+                          <span className="text-xs text-muted-foreground">
+                            {mod.slides.length} {t("learn.slides")}
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1 text-xs">
+                          <ImageIcon className="h-3 w-3" />
+                          {mod.image_url ? (
+                            <span className="text-green-600">{t("learn.imageGenerated")}</span>
+                          ) : (
+                            <span className="text-muted-foreground">{t("learn.imagePending")}</span>
+                          )}
+                        </span>
+                      </div>
+                    </div>
                     <div className="flex items-center gap-2">
                       <Button
                         variant="ghost"
