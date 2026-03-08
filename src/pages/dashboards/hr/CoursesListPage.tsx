@@ -48,7 +48,7 @@ const CoursesListPage = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("courses")
-      .select("id, title, category, status, created_at")
+      .select("id, title, category, status, created_at, generation_method")
       .order("created_at", { ascending: false });
 
     if (error) {
