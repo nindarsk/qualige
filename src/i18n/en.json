@@ -346,7 +346,19 @@
     "nextModule": "Next Module",
     "takeQuiz": "Take Quiz",
     "backToDashboard": "← Back to Dashboard",
-    "courseNotAssigned": "Course not assigned"
+    "courseNotAssigned": "Course not assigned",
+    "prevSlide": "Previous",
+    "nextSlide": "Next",
+    "completeModule": "Complete Module",
+    "completeAllSlides": "Complete all slides to continue",
+    "welcomeBack": "Welcome back! Continuing from where you left off.",
+    "previewMode": "Preview Mode — changes are not saved",
+    "previewAsEmployee": "Preview as Employee",
+    "slides": "slides",
+    "imageGenerated": "Generated",
+    "imagePending": "Pending",
+    "imageFailed": "Failed",
+    "regenerateImage": "Regenerate Image"
   },
   "quiz": {
     "questionOf": "Question {{current}} of {{total}}",
