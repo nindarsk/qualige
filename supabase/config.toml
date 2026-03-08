@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.grade-quiz]
 verify_jwt = false
+
+[functions.seed-demo-content]
+verify_jwt = false
