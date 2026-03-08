@@ -1,0 +1,1 @@
+ALTER VIEW public.organizations_safe SET (security_invoker = true);
