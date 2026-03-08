@@ -40,7 +40,7 @@ const QuizPage = () => {
       .from("quiz_questions_safe" as any)
       .select("id, question_number, question, options")
       .eq("course_id", courseId!)
-      .order("question_number");
+      .order("question_number") as { data: Question[] | null };
 
     setQuestions(data || []);
     setLoading(false);
