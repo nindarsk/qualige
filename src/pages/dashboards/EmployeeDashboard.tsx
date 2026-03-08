@@ -1,6 +1,7 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { BookOpen, Award, UserCircle, LogOut, Menu, X } from "lucide-react";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
@@ -54,7 +55,7 @@ const EmployeeDashboard = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            
+            <LanguageSwitcher />
             <span className="hidden text-sm text-muted-foreground sm:block">{fullName}</span>
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-primary text-xs text-primary-foreground">{initials}</AvatarFallback>

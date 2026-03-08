@@ -3,6 +3,7 @@ import { BookOpen, ShieldCheck, Award, ArrowRight, Sparkles, Upload, Brain, User
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 
 const LandingPage = () => {
@@ -36,7 +37,7 @@ const LandingPage = () => {
             <span className="text-xl font-bold text-primary">Quali</span>
           </Link>
           <div className="flex items-center gap-3">
-            
+            <LanguageSwitcher />
             <Button variant="ghost" asChild>
               <Link to="/pricing">{t("nav.pricing")}</Link>
             </Button>

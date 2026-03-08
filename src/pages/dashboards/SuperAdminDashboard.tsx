@@ -1,6 +1,7 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Building2, CreditCard, Settings, LogOut, Menu, X, BookOpen, Shield } from "lucide-react";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState } from "react";
@@ -91,6 +92,7 @@ const SuperAdminDashboard = () => {
             <h2 className="text-sm font-semibold text-foreground">Quali Admin</h2>
           </div>
           <div className="flex items-center gap-3">
+            <LanguageSwitcher />
             <span className="hidden text-sm text-muted-foreground sm:block">{fullName}</span>
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-primary text-xs text-primary-foreground">{initials}</AvatarFallback>
