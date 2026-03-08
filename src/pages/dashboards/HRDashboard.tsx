@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { PlusCircle, CreditCard } from "lucide-react";
+import { PlusCircle, CreditCard, FileStack } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
