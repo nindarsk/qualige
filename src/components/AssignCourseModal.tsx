@@ -113,10 +113,42 @@ const AssignCourseModal = ({ open, onOpenChange, courseId, courseTitle }: Assign
         description: `Course assigned to ${selected.size} employee${selected.size > 1 ? "s" : ""} successfully.`,
       });
 
-      // Audit log for each assignment
+      // Send assignment notification emails & audit log
       for (const empId of selected) {
         const emp = employees.find((e) => e.id === empId);
         logAuditEvent({ action: "COURSE_ASSIGNED", details: `Course: ${courseTitle} assigned to ${emp?.full_name || "employee"}` });
+
+        // Send assignment email
+        if (emp) {
+          console.log("Invoking send-email for assignment notification to:", emp.email);
+          const dueDateText = dueDate ? `<p>Completion deadline: <strong>${format(dueDate, "PPP")}</strong></p>` : "";
+          const { data: emailData, error: emailError } = await supabase.functions.invoke("send-email", {
+            body: {
+              to: emp.email,
+              subject: `New Training Assigned: ${courseTitle}`,
+              html_body: `
+                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+                  <div style="background: #1B3A6B; padding: 24px; text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 24px;">Quali.ge</h1>
+                    <div style="height: 3px; background: #C9A84C; margin-top: 12px;"></div>
+                  </div>
+                  <div style="padding: 32px; background: white;">
+                    <h2 style="color: #1B3A6B;">Hello, ${emp.full_name}!</h2>
+                    <p>You have been assigned a new training course:</p>
+                    <p style="font-size: 18px; font-weight: bold; color: #1B3A6B;">${courseTitle}</p>
+                    ${dueDateText}
+                    <p>Please log in to Quali.ge to start your training.</p>
+                    <a href="https://qualige.lovable.app/employee/courses" style="display: inline-block; background: #1B3A6B; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; margin-top: 16px;">Start Course</a>
+                  </div>
+                  <div style="background: #1B3A6B; padding: 16px; text-align: center;">
+                    <p style="color: rgba(255,255,255,0.6); font-size: 12px; margin: 0;">Quali.ge — AI-powered Learning Management System</p>
+                  </div>
+                </div>`,
+            },
+          });
+          console.log("send-email response:", emailData, emailError);
+          if (emailError) console.error("Failed to send assignment email:", emailError);
+        }
       }
 
       onOpenChange(false);
