@@ -237,8 +237,11 @@ const SettingsPage = () => {
 
       <Button onClick={handleSave} disabled={saving} className="w-full">
         {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-        {saving ? "Saving..." : "Save Settings"}
+        {saving ? t("settings.saving") : t("settings.saveSettings")}
       </Button>
+
+      {/* Two-Factor Authentication */}
+      <TwoFactorSetup />
     </div>
   );
 };
