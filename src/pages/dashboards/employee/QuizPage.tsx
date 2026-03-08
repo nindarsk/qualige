@@ -4,12 +4,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { cn } from "@/lib/utils";
-import { Loader2, ChevronRight, CheckCircle2, Send } from "lucide-react";
+import { Loader2, ChevronRight, Send } from "lucide-react";
 import { logAuditEvent } from "@/lib/audit-log";
 import { useTranslation } from "react-i18next";
+import QuizOptionCard from "@/components/quiz/QuizOptionCard";
 
 interface Question {
   id: string;
