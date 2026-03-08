@@ -50,6 +50,7 @@ const CourseReviewPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const [course, setCourse] = useState<Course | null>(null);
   const [modules, setModules] = useState<Module[]>([]);
@@ -57,6 +58,7 @@ const CourseReviewPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     if (id) fetchCourse();
