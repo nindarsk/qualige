@@ -25,6 +25,7 @@ interface Course {
   duration_minutes: number | null;
   learning_objectives: string[];
   status: string;
+  generation_method?: string;
 }
 
 interface Module {
