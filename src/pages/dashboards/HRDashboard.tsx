@@ -29,6 +29,7 @@ const HRDashboard = () => {
     { title: t("nav.dashboard"), path: "/hr", icon: LayoutDashboard },
     { title: t("nav.createCourse"), path: "/hr/upload", icon: PlusCircle },
     { title: t("nav.courses"), path: "/hr/courses", icon: BookOpen },
+    { title: t("nav.templates"), path: "/hr/templates", icon: FileStack },
     { title: t("nav.employees"), path: "/hr/employees", icon: Users },
     { title: t("nav.reports"), path: "/hr/reports", icon: BarChart3 },
     { title: t("nav.billing"), path: "/hr/billing", icon: CreditCard },
