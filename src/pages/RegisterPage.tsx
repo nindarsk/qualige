@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { isPasswordLeaked } from "@/lib/check-leaked-password";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 const registerSchema = z
   .object({

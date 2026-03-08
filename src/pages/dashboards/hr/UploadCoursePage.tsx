@@ -13,6 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import AIGenerateCourseTab from "@/components/course-creation/AIGenerateCourseTab";
 import AIGenerateQuizTab from "@/components/course-creation/AIGenerateQuizTab";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 const ACCEPTED_EXTENSIONS = [".pdf", ".docx", ".pptx", ".txt"];
 const MAX_SIZE = 20 * 1024 * 1024;
