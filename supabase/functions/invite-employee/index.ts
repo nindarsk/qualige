@@ -125,6 +125,20 @@ Deno.serve(async (req) => {
           const existingAuthUser = usersData?.users?.find(u => u.email === email);
           
           if (existingAuthUser) {
+            // Verify the auth user belongs to THIS organization before deleting
+            const { data: victimProfile } = await supabaseAdmin
+              .from("profiles")
+              .select("organization_id")
+              .eq("user_id", existingAuthUser.id)
+              .maybeSingle();
+
+            if (victimProfile?.organization_id && victimProfile.organization_id !== profile.organization_id) {
+              return new Response(JSON.stringify({ error: "This email is already registered to another organization" }), {
+                status: 400,
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+              });
+            }
+
             await supabaseAdmin.auth.admin.deleteUser(existingAuthUser.id);
           }
 
