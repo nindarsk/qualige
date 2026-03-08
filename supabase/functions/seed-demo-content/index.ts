@@ -17,24 +17,52 @@ Deno.serve(async (req) => {
     const admin = createClient(supabaseUrl, serviceRoleKey);
 
     // ── 1. Create demo organization ──
-    const { data: org, error: orgErr } = await admin
+    // Check for existing demo org
+    let orgId: string;
+    const { data: existingOrg } = await admin
       .from("organizations")
-      .insert({
-        name: "სადემონსტრაციო ბანკი",
-        plan: "pilot",
-        plan_status: "active",
-        industry: "Banking",
-        default_language: "ka",
-        max_employees: 50,
-        plan_started_at: new Date().toISOString(),
-        plan_ends_at: new Date(Date.now() + 90 * 86400000).toISOString(),
-      })
-      .select()
-      .single();
+      .select("id")
+      .eq("name", "სადემონსტრაციო ბანკი")
+      .maybeSingle();
 
-    if (orgErr) throw new Error(`Org creation failed: ${orgErr.message}`);
-    const orgId = org.id;
-    console.log("Created org:", orgId);
+    if (existingOrg) {
+      orgId = existingOrg.id;
+      // Clean up existing data
+      await admin.from("certificates").delete().eq("organization_id", orgId);
+      await admin.from("quiz_attempts").delete().in("employee_id",
+        (await admin.from("employees").select("id").eq("organization_id", orgId)).data?.map((e: any) => e.id) || []
+      );
+      await admin.from("course_progress").delete().in("employee_id",
+        (await admin.from("employees").select("id").eq("organization_id", orgId)).data?.map((e: any) => e.id) || []
+      );
+      await admin.from("course_assignments").delete().eq("organization_id", orgId);
+      await admin.from("quiz_questions").delete().in("course_id",
+        (await admin.from("courses").select("id").eq("organization_id", orgId)).data?.map((c: any) => c.id) || []
+      );
+      await admin.from("course_modules").delete().in("course_id",
+        (await admin.from("courses").select("id").eq("organization_id", orgId)).data?.map((c: any) => c.id) || []
+      );
+      await admin.from("courses").delete().eq("organization_id", orgId);
+      console.log("Cleaned existing demo org:", orgId);
+    } else {
+      const { data: org, error: orgErr } = await admin
+        .from("organizations")
+        .insert({
+          name: "სადემონსტრაციო ბანკი",
+          plan: "pilot",
+          plan_status: "active",
+          industry: "Banking",
+          default_language: "ka",
+          max_employees: 50,
+          plan_started_at: new Date().toISOString(),
+          plan_ends_at: new Date(Date.now() + 90 * 86400000).toISOString(),
+        })
+        .select()
+        .single();
+      if (orgErr) throw new Error(`Org creation failed: ${orgErr.message}`);
+      orgId = org.id;
+    }
+    console.log("Using org:", orgId);
 
     // ── 2. Create demo HR admin user ──
     const { data: hrUser, error: hrErr } = await admin.auth.admin.createUser({
