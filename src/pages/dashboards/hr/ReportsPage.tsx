@@ -16,6 +16,7 @@ import { downloadCertificate } from "@/lib/download-certificate";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import jsPDF from "jspdf";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 interface ReportRow {
   employeeName: string;

@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import RequestDemoModal from "@/components/RequestDemoModal";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 const plans = [
   {

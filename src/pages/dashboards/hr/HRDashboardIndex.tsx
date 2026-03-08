@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Users, BookOpen, Award, BarChart3, Trophy } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 interface DashStats {
   totalEmployees: number;

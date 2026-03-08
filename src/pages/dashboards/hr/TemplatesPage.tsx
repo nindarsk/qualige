@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
 import { BANKING_TOPICS, TopicCard } from "@/components/course-creation/TopicCards";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 const TEMPLATE_META: Record<string, { duration: string; modules: number; difficulty: string; objectives: string[] }> = {
   aml: { duration: "45 min", modules: 5, difficulty: "Intermediate", objectives: ["Understand AML regulations", "Identify suspicious transactions", "Know reporting obligations", "Apply customer due diligence", "Recognize money laundering typologies"] },

@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Award, Download, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 interface Cert {
   id: string;

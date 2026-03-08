@@ -15,6 +15,7 @@ import { ChevronDown, ChevronUp, Trash2, Plus, Check, Save, Rocket, Loader2, Eye
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import CoursePreviewModal from "@/components/slideshow/CoursePreviewModal";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 interface Course {
   id: string;

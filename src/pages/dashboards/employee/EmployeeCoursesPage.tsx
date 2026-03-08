@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Loader2, BookOpen, Award, Calendar, PlayCircle } from "lucide-react";
 import WelcomeBanner from "@/components/WelcomeBanner";
 import { useTranslation } from "react-i18next";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 interface Assignment {
   id: string;

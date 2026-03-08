@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import PlanChangeModal from "@/components/PlanChangeModal";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 interface OrgBilling {
   plan: string;

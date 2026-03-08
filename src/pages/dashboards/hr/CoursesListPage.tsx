@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Eye, Pencil, Trash2, BookOpen, Loader2, UserPlus } from "lucide-react";
+import { usePageTitle } from "@/hooks/use-page-title";
 import {
   AlertDialog,
   AlertDialogAction,

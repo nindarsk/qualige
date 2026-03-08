@@ -14,6 +14,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import SlideView from "@/components/slideshow/SlideView";
 import SlideNavigation from "@/components/slideshow/SlideNavigation";
 import ModuleSidebar from "@/components/slideshow/ModuleSidebar";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 interface Slide {
   slide_number: number;
