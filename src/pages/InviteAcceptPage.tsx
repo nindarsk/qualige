@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { BookOpen, Loader2, Check, X, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
 
 const InviteAcceptPage = () => {
   const { t } = useTranslation();
