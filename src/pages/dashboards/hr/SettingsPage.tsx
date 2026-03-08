@@ -9,6 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Loader2, Save, Upload } from "lucide-react";
+import TwoFactorSetup from "@/components/TwoFactorSetup";
+import { useTranslation } from "react-i18next";
 
 interface OrgSettings {
   name: string;
@@ -28,6 +30,7 @@ const LANGUAGES = ["English", "Georgian", "Russian"];
 
 const SettingsPage = () => {
   const { organizationId } = useAuth();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -234,8 +237,11 @@ const SettingsPage = () => {
 
       <Button onClick={handleSave} disabled={saving} className="w-full">
         {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-        {saving ? "Saving..." : "Save Settings"}
+        {saving ? t("settings.saving") : t("settings.saveSettings")}
       </Button>
+
+      {/* Two-Factor Authentication */}
+      <TwoFactorSetup />
     </div>
   );
 };

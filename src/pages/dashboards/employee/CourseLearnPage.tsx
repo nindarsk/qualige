@@ -10,6 +10,7 @@ import {
   ChevronLeft, ChevronRight, CheckCircle2, Circle, BookOpen, Loader2, ClipboardList,
 } from "lucide-react";
 import { logAuditEvent } from "@/lib/audit-log";
+import { useTranslation } from "react-i18next";
 
 interface Module {
   id: string;
@@ -24,6 +25,7 @@ const CourseLearnPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const [modules, setModules] = useState<Module[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -40,7 +42,6 @@ const CourseLearnPage = () => {
   }, [user, courseId]);
 
   const loadCourse = async () => {
-    // Get employee
     const { data: emp } = await supabase
       .from("employees")
       .select("id")
@@ -50,7 +51,6 @@ const CourseLearnPage = () => {
     if (!emp) { setLoading(false); return; }
     setEmployeeId(emp.id);
 
-    // Get assignment
     const { data: assign } = await supabase
       .from("course_assignments")
       .select("id")
@@ -59,13 +59,12 @@ const CourseLearnPage = () => {
       .single();
 
     if (!assign) {
-      toast({ title: "Course not assigned", variant: "destructive" });
+      toast({ title: t("learn.courseNotAssigned"), variant: "destructive" });
       navigate("/employee");
       return;
     }
     setAssignmentId(assign.id);
 
-    // Get course + modules
     const [courseRes, modulesRes] = await Promise.all([
       supabase.from("courses").select("title").eq("id", courseId!).single(),
       supabase.from("course_modules").select("*").eq("course_id", courseId!).order("module_number"),
@@ -74,7 +73,6 @@ const CourseLearnPage = () => {
     setCourseTitle(courseRes.data?.title || "");
     setModules(modulesRes.data || []);
 
-    // Get or create progress
     const { data: prog } = await supabase
       .from("course_progress")
       .select("*")
@@ -84,11 +82,9 @@ const CourseLearnPage = () => {
     if (prog) {
       setProgressId(prog.id);
       setCompletedModules(new Set((prog.completed_modules as string[]) || []));
-      // Resume at current module (0-indexed)
       const idx = Math.max(0, (prog.current_module || 1) - 1);
       setCurrentIndex(idx);
     } else {
-      // Create progress record
       const { data: newProg } = await supabase
         .from("course_progress")
         .insert({
@@ -103,13 +99,11 @@ const CourseLearnPage = () => {
 
       if (newProg) setProgressId(newProg.id);
 
-      // Update assignment status
       await supabase
         .from("course_assignments")
         .update({ status: "in_progress" })
         .eq("id", assign.id);
 
-      // Log course started
       logAuditEvent({ action: "COURSE_STARTED", details: `Employee started: ${courseRes.data?.title || "Course"}` });
     }
 
@@ -138,7 +132,6 @@ const CourseLearnPage = () => {
   }, [currentIndex, modules]);
 
   const goToModule = (index: number) => {
-    // Mark current as complete when navigating away
     markCurrentComplete();
     const newCompleted = new Set(completedModules);
     if (modules[currentIndex]) newCompleted.add(modules[currentIndex].id);
@@ -213,7 +206,7 @@ const CourseLearnPage = () => {
         </nav>
         <div className="border-t border-border p-4">
           <Button variant="outline" className="w-full" asChild>
-            <Link to="/employee">← Back to Dashboard</Link>
+            <Link to="/employee">{t("learn.backToDashboard")}</Link>
           </Button>
         </div>
       </aside>
@@ -223,8 +216,8 @@ const CourseLearnPage = () => {
         {/* Progress bar */}
         <div className="border-b border-border bg-card px-6 py-3">
           <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-            <span>Module {currentIndex + 1} of {modules.length}</span>
-            <span>{overallProgress}% complete</span>
+            <span>{t("learn.moduleOf", { current: currentIndex + 1, total: modules.length })}</span>
+            <span>{t("learn.percentComplete", { percent: overallProgress })}</span>
           </div>
           <Progress value={overallProgress} className="h-2" />
         </div>
@@ -240,7 +233,7 @@ const CourseLearnPage = () => {
 
               {currentModule.key_points && currentModule.key_points.length > 0 && (
                 <div className="mt-8 rounded-lg border border-border bg-muted/50 p-6">
-                  <h3 className="mb-3 font-semibold text-foreground">Key Points</h3>
+                  <h3 className="mb-3 font-semibold text-foreground">{t("learn.keyPoints")}</h3>
                   <ul className="space-y-2">
                     {currentModule.key_points.map((kp, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
@@ -263,7 +256,7 @@ const CourseLearnPage = () => {
               onClick={goPrev}
               disabled={currentIndex === 0}
             >
-              <ChevronLeft className="mr-2 h-4 w-4" /> Previous Module
+              <ChevronLeft className="mr-2 h-4 w-4" /> {t("learn.previousModule")}
             </Button>
 
             {isLastModule ? (
@@ -276,11 +269,11 @@ const CourseLearnPage = () => {
                   navigate(`/employee/learn/${courseId}/quiz`);
                 }}
               >
-                <ClipboardList className="mr-2 h-4 w-4" /> Take Quiz
+                <ClipboardList className="mr-2 h-4 w-4" /> {t("learn.takeQuiz")}
               </Button>
             ) : (
               <Button onClick={goNext}>
-                Next Module <ChevronRight className="ml-2 h-4 w-4" />
+                {t("learn.nextModule")} <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
             )}
           </div>

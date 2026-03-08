@@ -8,38 +8,55 @@ import { BookOpen, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { logAuditEvent } from "@/lib/audit-log";
 import { useTranslation } from "react-i18next";
+import TwoFactorVerify from "@/components/TwoFactorVerify";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t } = useTranslation();
+
+  const redirectByRole = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .single();
+
+      logAuditEvent({ action: "USER_LOGIN", details: "User logged in" });
+
+      if (roleData?.role === "hr_admin") navigate("/hr");
+      else if (roleData?.role === "employee") navigate("/employee");
+      else if (roleData?.role === "super_admin") navigate("/admin");
+      else navigate("/");
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: roleData } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", user.id)
-          .single();
+      // Check if MFA is required
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const verifiedFactors = factors?.totp?.filter(f => f.status === 'verified') || [];
 
-        logAuditEvent({ action: "USER_LOGIN", details: "User logged in" });
-
-        if (roleData?.role === "hr_admin") navigate("/hr");
-        else if (roleData?.role === "employee") navigate("/employee");
-        else if (roleData?.role === "super_admin") navigate("/admin");
-        else navigate("/");
+      if (verifiedFactors.length > 0) {
+        // Show 2FA verification screen
+        setMfaFactorId(verifiedFactors[0].id);
+        setLoading(false);
+        return;
       }
+
+      await redirectByRole();
     } catch (error: any) {
       toast({
         title: t("auth.loginFailed"),
@@ -50,6 +67,15 @@ const LoginPage = () => {
       setLoading(false);
     }
   };
+
+  if (mfaFactorId) {
+    return (
+      <TwoFactorVerify
+        factorId={mfaFactorId}
+        onVerified={redirectByRole}
+      />
+    );
+  }
 
   return (
     <div className="flex min-h-screen">
