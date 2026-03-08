@@ -203,11 +203,14 @@
     "reviewCourse": "Review your new course.",
     "generationFailed": "Generation failed",
     "loadingMessages": {
-      "analyzing": "Analyzing your content...",
+      "analyzing": "Analyzing your document...",
       "identifying": "Identifying key learning objectives...",
       "structuring": "Structuring course modules...",
-      "generatingQuiz": "Generating quiz questions...",
-      "almostReady": "Almost ready..."
+      "creatingSlides": "Creating presentation slides...",
+      "generatingImages": "Generating visual illustrations...",
+      "finalizing": "Finalizing your course...",
+      "almostReady": "Almost ready...",
+      "takingLong": "This may take up to a minute"
     }
   },
   "employees": {

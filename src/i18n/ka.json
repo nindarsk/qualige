@@ -346,7 +346,19 @@
     "nextModule": "შემდეგი მოდული",
     "takeQuiz": "ვიქტორინის გავლა",
     "backToDashboard": "← დაფაზე დაბრუნება",
-    "courseNotAssigned": "კურსი არ არის მინიჭებული"
+    "courseNotAssigned": "კურსი არ არის მინიჭებული",
+    "prevSlide": "წინა",
+    "nextSlide": "შემდეგი",
+    "completeModule": "მოდულის დასრულება",
+    "completeAllSlides": "გაიარეთ ყველა სლაიდი გასაგრძელებლად",
+    "welcomeBack": "კეთილი იყოს თქვენი დაბრუნება! გაგრძელება იქიდან, სადაც შეჩერდით.",
+    "previewMode": "წინასწარი ნახვა — ცვლილებები არ ინახება",
+    "previewAsEmployee": "თანამშრომლის ხედი",
+    "slides": "სლაიდები",
+    "imageGenerated": "შექმნილი",
+    "imagePending": "მოლოდინში",
+    "imageFailed": "ვერ შეიქმნა",
+    "regenerateImage": "სურათის ხელახლა შექმნა"
   },
   "quiz": {
     "questionOf": "კითხვა {{current}} / {{total}}",
