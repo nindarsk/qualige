@@ -9,6 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Loader2, Save, Upload } from "lucide-react";
+import TwoFactorSetup from "@/components/TwoFactorSetup";
+import { useTranslation } from "react-i18next";
 
 interface OrgSettings {
   name: string;
