@@ -60,6 +60,7 @@ const CourseReviewPage = () => {
   const [saving, setSaving] = useState(false);
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
   const [showPreview, setShowPreview] = useState(false);
+  const [disclaimerDismissed, setDisclaimerDismissed] = useState(false);
 
   useEffect(() => {
     if (id) fetchCourse();
