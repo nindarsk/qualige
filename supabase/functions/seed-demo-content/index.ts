@@ -157,13 +157,13 @@ Deno.serve(async (req) => {
         
         // Ensure profile + role
         await admin.from("profiles").upsert({
-          user_id: u.user.id,
+          user_id: empUserId,
           full_name: emp.name,
           organization_id: orgId,
         }, { onConflict: "user_id" });
         
         await admin.from("user_roles").upsert({
-          user_id: u.user.id,
+          user_id: empUserId,
           role: "employee",
         }, { onConflict: "user_id,role" });
       }
