@@ -487,6 +487,16 @@ const CourseReviewPage = () => {
           </Button>
         </div>
       </div>
+
+      {/* Preview Modal */}
+      {course && (
+        <CoursePreviewModal
+          open={showPreview}
+          onOpenChange={setShowPreview}
+          modules={modules}
+          courseTitle={course.title}
+        />
+      )}
     </div>
   );
 };
