@@ -105,17 +105,26 @@ Deno.serve(async (req) => {
     const userIds: string[] = [];
 
     for (const emp of empData) {
-      const { data: u, error: uErr } = await admin.auth.admin.createUser({
-        email: emp.email,
-        password: "QualiDemo2024!",
-        email_confirm: true,
-        user_metadata: {
-          full_name: emp.name,
-          role: "employee",
-          organization_id: orgId,
-        },
-      });
-      if (uErr) throw new Error(`Employee user creation failed: ${uErr.message}`);
+      // Check if user already exists
+      const existingEmpUser = existingUsers?.users?.find((u: any) => u.email === emp.email);
+      let empUserId: string;
+      
+      if (existingEmpUser) {
+        empUserId = existingEmpUser.id;
+      } else {
+        const { data: u, error: uErr } = await admin.auth.admin.createUser({
+          email: emp.email,
+          password: "QualiDemo2024!",
+          email_confirm: true,
+          user_metadata: {
+            full_name: emp.name,
+            role: "employee",
+            organization_id: orgId,
+          },
+        });
+        if (uErr) throw new Error(`Employee user creation failed: ${uErr.message}`);
+        empUserId = u.user.id;
+      }
       userIds.push(u.user.id);
 
       // The handle_new_user trigger should have created employee record
