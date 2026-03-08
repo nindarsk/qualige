@@ -276,6 +276,10 @@ const CourseReviewPage = () => {
           <Badge variant={course.status === "published" ? "default" : "outline"}>
             {course.status}
           </Badge>
+          <Button variant="outline" size="sm" onClick={() => setShowPreview(true)}>
+            <Eye className="mr-2 h-4 w-4" />
+            {t("learn.previewAsEmployee")}
+          </Button>
         </div>
       </div>
 
