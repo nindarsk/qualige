@@ -107,8 +107,8 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         from: fromAddress,
-        to: [to],
-        subject,
+        to: [actualTo],
+        subject: isVerifiedDomain ? subject : `[To: ${to}] ${subject}`,
         html: html_body,
       }),
     });
