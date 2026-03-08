@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // If passed, update assignment status
+    // If passed, update assignment status and send completion email
     if (passed) {
       const { data: assign } = await supabaseAdmin
         .from("course_assignments")
@@ -156,6 +156,48 @@ Deno.serve(async (req) => {
           .from("course_progress")
           .update({ completed_at: new Date().toISOString() })
           .eq("assignment_id", assign.id);
+      }
+
+      // Send completion email directly (server-side, no need for send-email function)
+      try {
+        const resendKey = Deno.env.get("RESEND_API_KEY");
+        if (resendKey) {
+          const { data: empData } = await supabaseAdmin
+            .from("employees")
+            .select("email, full_name")
+            .eq("id", emp.id)
+            .single();
+
+          if (empData) {
+            const resend = new Resend(resendKey);
+            const fromAddress = Deno.env.get("EMAIL_FROM") || "onboarding@resend.dev";
+            await resend.emails.send({
+              from: fromAddress,
+              to: empData.email,
+              subject: `Congratulations! You completed ${course.title}`,
+              html: `
+                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+                  <div style="background: #1B3A6B; padding: 24px; text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 24px;">Quali.ge</h1>
+                    <div style="height: 3px; background: #C9A84C; margin-top: 12px;"></div>
+                  </div>
+                  <div style="padding: 32px; background: white;">
+                    <h2 style="color: #1B3A6B;">Congratulations, ${empData.full_name}! 🎓</h2>
+                    <p>You have successfully completed the training course:</p>
+                    <p style="font-size: 18px; font-weight: bold; color: #1B3A6B;">${course.title}</p>
+                    <p>Your score: <strong>${Math.round(score)}%</strong></p>
+                    <p>Log in to Quali.ge to download your certificate.</p>
+                    <a href="https://qualige.lovable.app/employee/certificates" style="display: inline-block; background: #1B3A6B; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; margin-top: 16px;">Download Certificate</a>
+                  </div>
+                  <div style="background: #1B3A6B; padding: 16px; text-align: center;">
+                    <p style="color: rgba(255,255,255,0.6); font-size: 12px; margin: 0;">Quali.ge — AI-powered Learning Management System</p>
+                  </div>
+                </div>`,
+            }).catch((err: unknown) => console.error("Completion email error:", err));
+          }
+        }
+      } catch (emailErr) {
+        console.error("Completion email error:", emailErr);
       }
     }
 
