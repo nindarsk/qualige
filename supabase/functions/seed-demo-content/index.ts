@@ -65,17 +65,26 @@ Deno.serve(async (req) => {
     console.log("Using org:", orgId);
 
     // ── 2. Create demo HR admin user ──
-    const { data: hrUser, error: hrErr } = await admin.auth.admin.createUser({
-      email: "demo@quali.ge",
-      password: "QualiDemo2024!",
-      email_confirm: true,
-      user_metadata: {
-        full_name: "ნინო კაპანაძე",
-        company_name: "სადემონსტრაციო ბანკი",
-      },
-    });
-    if (hrErr) throw new Error(`HR user creation failed: ${hrErr.message}`);
-    const hrUserId = hrUser.user.id;
+    // Get or create HR admin user
+    let hrUserId: string;
+    const { data: existingUsers } = await admin.auth.admin.listUsers();
+    const existingHr = existingUsers?.users?.find((u: any) => u.email === "demo@quali.ge");
+    
+    if (existingHr) {
+      hrUserId = existingHr.id;
+    } else {
+      const { data: hrUser, error: hrErr } = await admin.auth.admin.createUser({
+        email: "demo@quali.ge",
+        password: "QualiDemo2024!",
+        email_confirm: true,
+        user_metadata: {
+          full_name: "ნინო კაპანაძე",
+          company_name: "სადემონსტრაციო ბანკი",
+        },
+      });
+      if (hrErr) throw new Error(`HR user creation failed: ${hrErr.message}`);
+      hrUserId = hrUser.user.id;
+    }
 
     // Update profile with org
     await admin
