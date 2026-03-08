@@ -21,6 +21,7 @@ import ReportsPage from "./pages/dashboards/hr/ReportsPage";
 import UploadCoursePage from "./pages/dashboards/hr/UploadCoursePage";
 import CoursesListPage from "./pages/dashboards/hr/CoursesListPage";
 import CourseReviewPage from "./pages/dashboards/hr/CourseReviewPage";
+import TemplatesPage from "./pages/dashboards/hr/TemplatesPage";
 import EmployeesPage from "./pages/dashboards/hr/EmployeesPage";
 import HRDashboardIndex from "./pages/dashboards/hr/HRDashboardIndex";
 import EmployeeCoursesPage from "./pages/dashboards/employee/EmployeeCoursesPage";
@@ -69,6 +70,7 @@ const App = () => (
               <Route path="upload" element={<UploadCoursePage />} />
               <Route path="courses" element={<CoursesListPage />} />
               <Route path="courses/:id/review" element={<CourseReviewPage />} />
+              <Route path="templates" element={<TemplatesPage />} />
               <Route path="employees" element={<EmployeesPage />} />
               <Route path="reports" element={<ReportsPage />} />
               <Route path="billing" element={<BillingPage />} />

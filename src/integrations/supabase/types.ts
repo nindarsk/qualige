@@ -316,6 +316,7 @@ export type Database = {
           created_by: string
           description: string | null
           duration_minutes: number | null
+          generation_method: string
           id: string
           language: string
           learning_objectives: string[] | null
@@ -332,6 +333,7 @@ export type Database = {
           created_by: string
           description?: string | null
           duration_minutes?: number | null
+          generation_method?: string
           id?: string
           language?: string
           learning_objectives?: string[] | null
@@ -348,6 +350,7 @@ export type Database = {
           created_by?: string
           description?: string | null
           duration_minutes?: number | null
+          generation_method?: string
           id?: string
           language?: string
           learning_objectives?: string[] | null
@@ -655,6 +658,9 @@ export type Database = {
           options: string[]
           question: string
           question_number: number
+          question_type: string
+          regulation_reference: string | null
+          scenario: string | null
         }
         Insert: {
           correct_answer: string
@@ -665,6 +671,9 @@ export type Database = {
           options?: string[]
           question: string
           question_number: number
+          question_type?: string
+          regulation_reference?: string | null
+          scenario?: string | null
         }
         Update: {
           correct_answer?: string
@@ -675,6 +684,9 @@ export type Database = {
           options?: string[]
           question?: string
           question_number?: number
+          question_type?: string
+          regulation_reference?: string | null
+          scenario?: string | null
         }
         Relationships: [
           {

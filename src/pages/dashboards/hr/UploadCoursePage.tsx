@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,29 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, FileText, X, BookOpen, Loader2 } from "lucide-react";
+import { Upload, FileText, X, BookOpen, Loader2, Sparkles, ClipboardCheck } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import AIGenerateCourseTab from "@/components/course-creation/AIGenerateCourseTab";
+import AIGenerateQuizTab from "@/components/course-creation/AIGenerateQuizTab";
 
-const ACCEPTED_TYPES = [
-  "application/pdf",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  "text/plain",
-];
 const ACCEPTED_EXTENSIONS = [".pdf", ".docx", ".pptx", ".txt"];
-const MAX_SIZE = 20 * 1024 * 1024; // 20MB
+const MAX_SIZE = 20 * 1024 * 1024;
 
-const CATEGORIES = [
-  "Compliance",
-  "AML",
-  "Customer Service",
-  "Risk Management",
-  "IT Security",
-  "HR Policy",
-  "Other",
-];
-
+const CATEGORIES = ["Compliance", "AML", "Customer Service", "Risk Management", "IT Security", "HR Policy", "Other"];
 const LANGUAGES = ["English", "Georgian", "Russian"];
 
 const LOADING_STEPS = [
@@ -42,14 +29,27 @@ const LOADING_STEPS = [
   { key: "finalizing", progressEnd: 100 },
 ];
 
+type TabId = "upload" | "ai-course" | "ai-quiz";
+
+const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
+  { id: "upload", label: "Upload Document", icon: <Upload className="h-4 w-4" /> },
+  { id: "ai-course", label: "AI Generate Course", icon: <Sparkles className="h-4 w-4" /> },
+  { id: "ai-quiz", label: "AI Generate Quiz", icon: <ClipboardCheck className="h-4 w-4" /> },
+];
+
 const UploadCoursePage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Support pre-selecting tab via navigation state (from templates page)
+  const initialTab = (location.state as any)?.tab || "upload";
+  const [activeTab, setActiveTab] = useState<TabId>(initialTab as TabId);
+
   const [file, setFile] = useState<File | null>(null);
-  const [youtubeUrl, setYoutubeUrl] = useState("");
   const [category, setCategory] = useState("Compliance");
   const [language, setLanguage] = useState("English");
   const [isDragging, setIsDragging] = useState(false);
@@ -83,8 +83,8 @@ const UploadCoursePage = () => {
   };
 
   const handleGenerate = async () => {
-    if (!file && !youtubeUrl.trim()) {
-      toast({ title: "No content provided", description: "Upload a file or enter a YouTube URL.", variant: "destructive" });
+    if (!file) {
+      toast({ title: "No file", description: "Upload a file first.", variant: "destructive" });
       return;
     }
 
@@ -92,13 +92,11 @@ const UploadCoursePage = () => {
     setProgress(0);
     setLoadingMsgIndex(0);
 
-    // Cycle loading steps with appropriate timing
-    const stepDuration = 8000; // 8s per step
+    const stepDuration = 8000;
     const msgInterval = setInterval(() => {
       setLoadingMsgIndex((prev) => Math.min(prev + 1, LOADING_STEPS.length - 1));
     }, stepDuration);
 
-    // Animate progress smoothly toward each step's target
     const progressInterval = setInterval(() => {
       setLoadingMsgIndex((prevIdx) => {
         const target = LOADING_STEPS[Math.min(prevIdx, LOADING_STEPS.length - 1)].progressEnd;
@@ -108,39 +106,23 @@ const UploadCoursePage = () => {
     }, 400);
 
     try {
-      let filePath: string | null = null;
-
-      if (file) {
-        const ext = file.name.split(".").pop();
-        const path = `${user!.id}/${Date.now()}.${ext}`;
-        const { error: uploadError } = await supabase.storage
-          .from("course-materials")
-          .upload(path, file);
-        if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
-        filePath = path;
-      }
+      const ext = file.name.split(".").pop();
+      const path = `${user!.id}/${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("course-materials").upload(path, file);
+      if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
 
       const { data, error } = await supabase.functions.invoke("generate-course", {
-        body: {
-          filePath,
-          youtubeUrl: youtubeUrl.trim() || null,
-          category,
-          language,
-        },
+        body: { filePath: path, category, language },
       });
 
       if (error) {
-        // Extract the actual error message from the edge function response
         const context = (error as any)?.context;
         let errorMsg = "Something went wrong.";
         if (context && typeof context === "object") {
           try {
-            // context may be a Response object
             const body = context.body ? await new Response(context.body).json() : null;
             if (body?.error) errorMsg = body.error;
-          } catch {
-            // ignore parse errors
-          }
+          } catch { /* ignore */ }
         }
         throw new Error(errorMsg);
       }
@@ -148,10 +130,7 @@ const UploadCoursePage = () => {
 
       setProgress(100);
       toast({ title: "Course generated!", description: "Review your new course." });
-
-      setTimeout(() => {
-        navigate(`/hr/courses/${data.courseId}/review`);
-      }, 500);
+      setTimeout(() => navigate(`/hr/courses/${data.courseId}/review`), 500);
     } catch (err: any) {
       console.error("Generation error:", err);
       toast({ title: "Generation failed", description: err.message || "Something went wrong.", variant: "destructive" });
@@ -161,8 +140,6 @@ const UploadCoursePage = () => {
       setIsGenerating(false);
     }
   };
-
-  const { t } = useTranslation();
 
   if (isGenerating) {
     const currentStep = LOADING_STEPS[loadingMsgIndex];
@@ -179,9 +156,7 @@ const UploadCoursePage = () => {
             {t(`courses.loadingMessages.${currentStep.key}`)}
           </p>
           {showLongMessage && (
-            <p className="text-sm text-muted-foreground/70">
-              {t("courses.loadingMessages.takingLong")}
-            </p>
+            <p className="text-sm text-muted-foreground/70">{t("courses.loadingMessages.takingLong")}</p>
           )}
         </div>
       </div>
@@ -189,107 +164,103 @@ const UploadCoursePage = () => {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8">
+    <div className="mx-auto max-w-4xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Create Course</h1>
-        <p className="text-muted-foreground">Upload training material and let AI build your course.</p>
+        <h1 className="text-2xl font-bold text-foreground">Create Content</h1>
+        <p className="text-muted-foreground">Upload documents or use AI to generate training courses and quizzes.</p>
       </div>
 
-      {/* Upload Zone */}
-      <Card>
-        <CardContent className="p-6">
-          {file ? (
-            <div className="flex items-center justify-between rounded-lg border border-border bg-muted/50 p-4">
-              <div className="flex items-center gap-3">
-                <FileText className="h-8 w-8 text-primary" />
-                <div>
-                  <p className="font-medium text-foreground">{file.name}</p>
-                  <p className="text-sm text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+      {/* Tab Switcher */}
+      <div className="flex rounded-lg border border-border bg-muted/30 p-1">
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={cn(
+              "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium transition-all",
+              activeTab === tab.id
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            )}
+          >
+            {tab.icon}
+            <span className="hidden sm:inline">{tab.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === "upload" && (
+        <div className="space-y-8">
+          <Card>
+            <CardContent className="p-6">
+              {file ? (
+                <div className="flex items-center justify-between rounded-lg border border-border bg-muted/50 p-4">
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-8 w-8 text-primary" />
+                    <div>
+                      <p className="font-medium text-foreground">{file.name}</p>
+                      <p className="text-sm text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={() => setFile(null)}>
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => setFile(null)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          ) : (
-            <div
-              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-              className={cn(
-                "flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 transition-colors",
-                isDragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+              ) : (
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={cn(
+                    "flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 transition-colors",
+                    isDragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                  )}
+                >
+                  <Upload className="mb-4 h-12 w-12 text-muted-foreground" />
+                  <p className="mb-2 text-lg font-medium text-foreground">Drop your training material here</p>
+                  <p className="mb-4 text-sm text-muted-foreground">PDF, DOCX, PPTX, or TXT — max 20MB</p>
+                  <Button variant="outline" type="button">Browse files</Button>
+                  <input ref={fileInputRef} type="file" accept={ACCEPTED_EXTENSIONS.join(",")} onChange={handleFileSelect} className="hidden" />
+                </div>
               )}
-            >
-              <Upload className="mb-4 h-12 w-12 text-muted-foreground" />
-              <p className="mb-2 text-lg font-medium text-foreground">Drop your training material here</p>
-              <p className="mb-4 text-sm text-muted-foreground">PDF, DOCX, PPTX, or TXT — max 20MB</p>
-              <Button variant="outline" type="button">Browse files</Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept={ACCEPTED_EXTENSIONS.join(",")}
-                onChange={handleFileSelect}
-                className="hidden"
-              />
+            </CardContent>
+          </Card>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-foreground">Course Language</label>
+              <Select value={language} onValueChange={setLanguage}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {LANGUAGES.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-foreground">Course Category</label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
-      {/* YouTube URL - hidden for now, can be re-enabled later */}
-      {/* <Card>
-        <CardContent className="p-6">
-          <label className="mb-2 block text-sm font-medium text-foreground">Or paste a YouTube URL</label>
-          <Input
-            placeholder="https://www.youtube.com/watch?v=..."
-            value={youtubeUrl}
-            onChange={(e) => setYoutubeUrl(e.target.value)}
-            disabled={!!file}
-          />
-          {youtubeUrl.trim() && !file && (
-            <p className="mt-2 text-sm text-muted-foreground">
-              ℹ️ We will extract the video transcript to generate your course. Video must have captions enabled.
-            </p>
-          )}
-        </CardContent>
-      </Card> */}
-
-      {/* Settings */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className="mb-2 block text-sm font-medium text-foreground">Course Language</label>
-          <Select value={language} onValueChange={setLanguage}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {LANGUAGES.map((l) => (
-                <SelectItem key={l} value={l}>{l}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Button
+            onClick={handleGenerate}
+            disabled={!file}
+            className="w-full h-12 text-base font-semibold"
+          >
+            Generate Course with AI
+          </Button>
         </div>
-        <div>
-          <label className="mb-2 block text-sm font-medium text-foreground">Course Category</label>
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {CATEGORIES.map((c) => (
-                <SelectItem key={c} value={c}>{c}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      )}
 
-      {/* Generate Button */}
-      <Button
-        onClick={handleGenerate}
-        disabled={!file}
-        className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-12 text-base font-semibold"
-      >
-        Generate Course with AI
-      </Button>
+      {activeTab === "ai-course" && <AIGenerateCourseTab />}
+      {activeTab === "ai-quiz" && <AIGenerateQuizTab />}
     </div>
   );
 };
