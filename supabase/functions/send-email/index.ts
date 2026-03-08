@@ -89,6 +89,14 @@ serve(async (req) => {
 
     // Use onboarding@resend.dev as default until custom domain is verified in Resend
     const fromAddress = Deno.env.get("EMAIL_FROM") || "onboarding@resend.dev";
+
+    // Resend sandbox mode: can only send to the account owner's email
+    const sandboxEmail = "nindarsk@gmail.com";
+    const isVerifiedDomain = fromAddress !== "onboarding@resend.dev";
+    const actualTo = isVerifiedDomain ? to : sandboxEmail;
+    if (!isVerifiedDomain && to !== sandboxEmail) {
+      console.log(`Resend sandbox mode: redirecting email from ${to} to ${sandboxEmail}`);
+    }
     console.log("5. From address:", fromAddress);
 
     const res = await fetch("https://api.resend.com/emails", {
