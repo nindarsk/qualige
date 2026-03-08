@@ -138,35 +138,16 @@ const QuizPage = () => {
         <div className="mx-auto max-w-2xl space-y-6">
           <h2 className="text-xl font-bold text-foreground">{q.question}</h2>
 
-          <div className="grid gap-3">
+          <div className="flex flex-col gap-3">
             {q.options.map((option, idx) => (
-              <Card
+              <QuizOptionCard
                 key={idx}
-                className={cn(
-                  "cursor-pointer transition-all hover:shadow-md",
-                  selectedAnswer === option
-                    ? "border-primary bg-primary/5 ring-2 ring-primary"
-                    : "hover:border-primary/50"
-                )}
+                index={idx}
+                label={option}
+                state={selectedAnswer === option ? "selected" : "default"}
                 onClick={() => selectAnswer(option)}
-              >
-                <CardContent className="flex items-center gap-4 p-4">
-                  <div
-                    className={cn(
-                      "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-sm font-bold",
-                      selectedAnswer === option
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border text-muted-foreground"
-                    )}
-                  >
-                    {String.fromCharCode(65 + idx)}
-                  </div>
-                  <span className="text-foreground">{option}</span>
-                  {selectedAnswer === option && (
-                    <CheckCircle2 className="ml-auto h-5 w-5 text-primary" />
-                  )}
-                </CardContent>
-              </Card>
+                showCheck
+              />
             ))}
           </div>
         </div>
