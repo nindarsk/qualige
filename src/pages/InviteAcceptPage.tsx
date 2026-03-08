@@ -337,9 +337,11 @@ const InviteAcceptPage = () => {
 
           <h1 className="mb-2 text-2xl font-bold text-foreground">{t("invite.welcomeToQuali")}</h1>
           {orgName ? (
-            <p className="mb-8 text-muted-foreground" dangerouslySetInnerHTML={{
-              __html: t("invite.invitedBy", { orgName })
-            }} />
+            <p className="mb-8 text-muted-foreground">
+              <Trans i18nKey="invite.invitedBy" values={{ orgName }}>
+                You have been invited by <strong>{{ orgName } as any}</strong> to complete your training.
+              </Trans>
+            </p>
           ) : (
             <p className="mb-8 text-muted-foreground">{t("invite.setUpAccount")}</p>
           )}
