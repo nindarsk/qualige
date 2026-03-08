@@ -162,7 +162,11 @@ const UploadCoursePage = () => {
     }
   };
 
+  const { t } = useTranslation();
+
   if (isGenerating) {
+    const currentStep = LOADING_STEPS[loadingMsgIndex];
+    const showLongMessage = progress > 30;
     return (
       <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-8 px-6 text-center">
@@ -172,8 +176,13 @@ const UploadCoursePage = () => {
             <Progress value={progress} className="h-3" />
           </div>
           <p className="text-lg text-muted-foreground animate-pulse">
-            {(youtubeUrl.trim() ? LOADING_MESSAGES_YOUTUBE : LOADING_MESSAGES_FILE)[loadingMsgIndex]}
+            {t(`courses.loadingMessages.${currentStep.key}`)}
           </p>
+          {showLongMessage && (
+            <p className="text-sm text-muted-foreground/70">
+              {t("courses.loadingMessages.takingLong")}
+            </p>
+          )}
         </div>
       </div>
     );
