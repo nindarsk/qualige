@@ -421,5 +421,26 @@
     "en": "English",
     "ka": "ქართული",
     "ru": "Русский"
+  },
+  "twoFactor": {
+    "title": "Two-Factor Authentication",
+    "description": "Add an extra layer of security to your account using an authenticator app.",
+    "enabled": "Enabled",
+    "notEnabled": "Not Enabled",
+    "enable": "Enable Two-Factor Authentication",
+    "disable": "Disable Two-Factor Authentication",
+    "scanQR": "Scan this QR code with Google Authenticator or Microsoft Authenticator:",
+    "manualEntry": "Or enter this code manually:",
+    "enterCode": "Enter the 6-digit verification code:",
+    "verify": "Verify",
+    "enrollFailed": "Failed to start enrollment",
+    "invalidCode": "Invalid code. Please try again.",
+    "enabledSuccess": "Two-factor authentication enabled successfully!",
+    "disabledSuccess": "Two-factor authentication disabled.",
+    "disableTitle": "Disable Two-Factor Authentication",
+    "disableDesc": "Enter your current authenticator code to disable 2FA.",
+    "confirmDisable": "Disable 2FA",
+    "enterAuthCode": "Enter Authentication Code",
+    "openAuthApp": "Open your authenticator app and enter the 6-digit code."
   }
 }
