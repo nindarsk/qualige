@@ -102,70 +102,37 @@ Deno.serve(async (req) => {
     ];
 
     const employeeIds: string[] = [];
-    const userIds: string[] = [];
 
     for (const emp of empData) {
-      // Check if user already exists
       const existingEmpUser = existingUsers?.users?.find((u: any) => u.email === emp.email);
-      let empUserId: string;
-      
+
       if (existingEmpUser) {
-        empUserId = existingEmpUser.id;
+        // User exists — ensure employee record
+        let { data: empRec } = await admin.from("employees").select("id").eq("email", emp.email).eq("organization_id", orgId).maybeSingle();
+        if (!empRec) {
+          const { data: newEmp } = await admin.from("employees").insert({
+            email: emp.email, full_name: emp.name, organization_id: orgId,
+            user_id: existingEmpUser.id, status: "active", department: "საბანკო ოპერაციები", joined_at: new Date().toISOString(),
+          }).select().single();
+          empRec = newEmp;
+        }
+        if (empRec) employeeIds.push(empRec.id);
+        await admin.from("profiles").upsert({ user_id: existingEmpUser.id, full_name: emp.name, organization_id: orgId }, { onConflict: "user_id" });
+        await admin.from("user_roles").upsert({ user_id: existingEmpUser.id, role: "employee" }, { onConflict: "user_id,role" });
       } else {
-        const { data: u, error: uErr } = await admin.auth.admin.createUser({
-          email: emp.email,
-          password: "QualiDemo2024!",
-          email_confirm: true,
-          user_metadata: {
-            full_name: emp.name,
-            role: "employee",
-            organization_id: orgId,
-          },
+        // Pre-create pending employee record so handle_new_user trigger works
+        await admin.from("employees").insert({
+          email: emp.email, full_name: emp.name, organization_id: orgId, status: "pending", department: "საბანკო ოპერაციები",
         });
-        if (uErr) throw new Error(`Employee user creation failed: ${uErr.message}`);
-        empUserId = u.user.id;
-      }
-      userIds.push(empUserId);
 
-      // The handle_new_user trigger should have created employee record
-      // But let's ensure it by fetching
-      const { data: empRec } = await admin
-        .from("employees")
-        .select("id")
-        .eq("email", emp.email)
-        .eq("organization_id", orgId)
-        .single();
+        const { data: u, error: uErr } = await admin.auth.admin.createUser({
+          email: emp.email, password: "QualiDemo2024!", email_confirm: true,
+          user_metadata: { full_name: emp.name, role: "employee", organization_id: orgId },
+        });
+        if (uErr) throw new Error(`Employee user creation failed for ${emp.email}: ${uErr.message}`);
 
-      if (empRec) {
-        employeeIds.push(empRec.id);
-      } else {
-        // Insert manually if trigger didn't fire (employee wasn't pre-invited)
-        const { data: newEmp } = await admin
-          .from("employees")
-          .insert({
-            email: emp.email,
-            full_name: emp.name,
-            organization_id: orgId,
-            user_id: empUserId,
-            status: "active",
-            department: "საბანკო ოპერაციები",
-            joined_at: new Date().toISOString(),
-          })
-          .select()
-          .single();
-        if (newEmp) employeeIds.push(newEmp.id);
-        
-        // Ensure profile + role
-        await admin.from("profiles").upsert({
-          user_id: empUserId,
-          full_name: emp.name,
-          organization_id: orgId,
-        }, { onConflict: "user_id" });
-        
-        await admin.from("user_roles").upsert({
-          user_id: empUserId,
-          role: "employee",
-        }, { onConflict: "user_id,role" });
+        const { data: empRec } = await admin.from("employees").select("id").eq("email", emp.email).eq("organization_id", orgId).single();
+        if (empRec) employeeIds.push(empRec.id);
       }
     }
 
