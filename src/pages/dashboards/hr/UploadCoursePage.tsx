@@ -87,22 +87,24 @@ const UploadCoursePage = () => {
       return;
     }
 
-    const isYoutube = !file && !!youtubeUrl.trim();
-    const loadingMessages = isYoutube ? LOADING_MESSAGES_YOUTUBE : LOADING_MESSAGES_FILE;
-
     setIsGenerating(true);
     setProgress(0);
     setLoadingMsgIndex(0);
 
-    // Cycle loading messages
+    // Cycle loading steps with appropriate timing
+    const stepDuration = 8000; // 8s per step
     const msgInterval = setInterval(() => {
-      setLoadingMsgIndex((prev) => Math.min(prev + 1, loadingMessages.length - 1));
-    }, 5000);
+      setLoadingMsgIndex((prev) => Math.min(prev + 1, LOADING_STEPS.length - 1));
+    }, stepDuration);
 
-    // Animate progress
+    // Animate progress smoothly toward each step's target
     const progressInterval = setInterval(() => {
-      setProgress((prev) => Math.min(prev + 2, 90));
-    }, 600);
+      setLoadingMsgIndex((prevIdx) => {
+        const target = LOADING_STEPS[Math.min(prevIdx, LOADING_STEPS.length - 1)].progressEnd;
+        setProgress((prev) => Math.min(prev + 1, target - 5));
+        return prevIdx;
+      });
+    }, 400);
 
     try {
       let filePath: string | null = null;
