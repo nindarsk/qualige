@@ -53,6 +53,13 @@ export type Database = {
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "audit_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       certificates: {
@@ -106,6 +113,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -176,6 +190,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_assignments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -336,6 +357,13 @@ export type Database = {
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "courses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       demo_requests: {
@@ -429,6 +457,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -544,6 +579,13 @@ export type Database = {
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       quiz_attempts: {
@@ -655,7 +697,98 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      organizations_safe: {
+        Row: {
+          created_at: string | null
+          default_language: string | null
+          id: string | null
+          industry: string | null
+          logo_url: string | null
+          max_employees: number | null
+          name: string | null
+          notify_assignment: boolean | null
+          notify_completion: boolean | null
+          notify_overdue: boolean | null
+          notify_reminder: boolean | null
+          plan: string | null
+          plan_ends_at: string | null
+          plan_started_at: string | null
+          plan_status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          default_language?: string | null
+          id?: string | null
+          industry?: string | null
+          logo_url?: string | null
+          max_employees?: number | null
+          name?: string | null
+          notify_assignment?: boolean | null
+          notify_completion?: boolean | null
+          notify_overdue?: boolean | null
+          notify_reminder?: boolean | null
+          plan?: string | null
+          plan_ends_at?: string | null
+          plan_started_at?: string | null
+          plan_status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          default_language?: string | null
+          id?: string | null
+          industry?: string | null
+          logo_url?: string | null
+          max_employees?: number | null
+          name?: string | null
+          notify_assignment?: boolean | null
+          notify_completion?: boolean | null
+          notify_overdue?: boolean | null
+          notify_reminder?: boolean | null
+          plan?: string | null
+          plan_ends_at?: string | null
+          plan_started_at?: string | null
+          plan_status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      quiz_questions_safe: {
+        Row: {
+          course_id: string | null
+          created_at: string | null
+          id: string | null
+          options: string[] | null
+          question: string | null
+          question_number: number | null
+        }
+        Insert: {
+          course_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          options?: string[] | null
+          question?: string | null
+          question_number?: number | null
+        }
+        Update: {
+          course_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          options?: string[] | null
+          question?: string | null
+          question_number?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       get_user_organization_id: { Args: { _user_id: string }; Returns: string }
