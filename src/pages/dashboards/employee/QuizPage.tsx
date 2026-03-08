@@ -35,9 +35,9 @@ const QuizPage = () => {
   }, [user, courseId]);
 
   const loadQuiz = async () => {
-    // Only fetch question text and options — NOT correct_answer or explanation
+    // Use the safe view that excludes correct_answer and explanation
     const { data } = await supabase
-      .from("quiz_questions")
+      .from("quiz_questions_safe" as any)
       .select("id, question_number, question, options")
       .eq("course_id", courseId!)
       .order("question_number");
