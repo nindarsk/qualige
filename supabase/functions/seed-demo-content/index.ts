@@ -125,7 +125,7 @@ Deno.serve(async (req) => {
         if (uErr) throw new Error(`Employee user creation failed: ${uErr.message}`);
         empUserId = u.user.id;
       }
-      userIds.push(u.user.id);
+      userIds.push(empUserId);
 
       // The handle_new_user trigger should have created employee record
       // But let's ensure it by fetching
