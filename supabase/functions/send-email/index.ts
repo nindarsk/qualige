@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { Resend } from "npm:resend@6";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -9,12 +8,13 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log("1. send-email function invoked");
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Verify authentication
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Missing authorization header" }), {
@@ -32,7 +32,6 @@ serve(async (req) => {
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      // Check if this is a service-role call (from other edge functions like scheduled-notifications)
       const token = authHeader.replace("Bearer ", "");
       if (token !== serviceRoleKey) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -42,7 +41,6 @@ serve(async (req) => {
       }
     }
 
-    // If authenticated as a user, verify they have hr_admin or super_admin role
     if (user) {
       const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
       const { data: roleData } = await supabaseAdmin
@@ -60,6 +58,8 @@ serve(async (req) => {
     }
 
     const resendKey = Deno.env.get("RESEND_API_KEY");
+    console.log("2. RESEND_API_KEY exists:", !!resendKey);
+
     if (!resendKey) {
       console.error("RESEND_API_KEY not configured");
       return new Response(JSON.stringify({ error: "Email service not configured" }), {
@@ -68,8 +68,9 @@ serve(async (req) => {
       });
     }
 
-    const resend = new Resend(resendKey);
     const { to, subject, html_body } = await req.json();
+    console.log("3. Sending to:", to);
+    console.log("4. Subject:", subject);
 
     if (!to || !subject || !html_body) {
       return new Response(JSON.stringify({ error: "Missing required fields: to, subject, html_body" }), {
@@ -78,7 +79,6 @@ serve(async (req) => {
       });
     }
 
-    // Validate email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(to)) {
       return new Response(JSON.stringify({ error: "Invalid email address" }), {
@@ -87,24 +87,38 @@ serve(async (req) => {
       });
     }
 
+    // Use onboarding@resend.dev as default until custom domain is verified in Resend
     const fromAddress = Deno.env.get("EMAIL_FROM") || "onboarding@resend.dev";
+    console.log("5. From address:", fromAddress);
 
-    const { data, error } = await resend.emails.send({
-      from: fromAddress,
-      to,
-      subject,
-      html: html_body,
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${resendKey}`,
+      },
+      body: JSON.stringify({
+        from: fromAddress,
+        to: [to],
+        subject,
+        html: html_body,
+      }),
     });
 
-    if (error) {
-      console.error("Resend error:", error);
-      return new Response(JSON.stringify({ error: error.message }), {
+    const resendResponse = await res.json();
+    console.log("6. Resend API response:", JSON.stringify(resendResponse));
+
+    if (!res.ok) {
+      console.error("Resend error:", resendResponse);
+      return new Response(JSON.stringify({ error: resendResponse.message || "Email send failed" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(JSON.stringify({ success: true, id: data?.id }), {
+    console.log("7. Email sent successfully, id:", resendResponse.id);
+
+    return new Response(JSON.stringify({ success: true, id: resendResponse.id }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
