@@ -2,8 +2,10 @@ import { Link } from "react-router-dom";
 import { BookOpen, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 const VerifyEmailPage = () => {
+  usePageTitle("Verify Email");
   const { t } = useTranslation();
 
   return (

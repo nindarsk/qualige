@@ -10,8 +10,10 @@ import { BookOpen, Loader2, Check, X, AlertTriangle, CheckCircle2 } from "lucide
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useTranslation, Trans } from "react-i18next";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 const InviteAcceptPage = () => {
+  usePageTitle("Accept Invitation");
   const { t } = useTranslation();
 
   const passwordRequirements = [
