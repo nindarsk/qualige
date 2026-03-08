@@ -30,6 +30,7 @@ const LANGUAGES = ["English", "Georgian", "Russian"];
 
 const SettingsPage = () => {
   const { organizationId } = useAuth();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
