@@ -1,6 +1,7 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { BookOpen, Award, UserCircle, LogOut, Menu, X } from "lucide-react";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
