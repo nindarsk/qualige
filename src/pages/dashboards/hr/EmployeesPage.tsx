@@ -190,11 +190,11 @@ const EmployeesPage = () => {
   const statusBadge = (status: string) => {
     switch (status) {
       case "active":
-        return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Active</Badge>;
+        return <Badge variant="default">Active</Badge>;
       case "pending":
-        return <Badge variant="outline" className="border-amber-300 text-amber-600">Pending</Badge>;
+        return <Badge variant="warning">Pending</Badge>;
       case "inactive":
-        return <Badge variant="secondary" className="text-muted-foreground">Inactive</Badge>;
+        return <Badge variant="secondary">Inactive</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }

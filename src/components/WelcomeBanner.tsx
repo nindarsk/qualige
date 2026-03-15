@@ -37,14 +37,14 @@ const WelcomeBanner = () => {
   if (!visible) return null;
 
   return (
-    <div className="mb-6 flex items-start gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4">
-      <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+    <div className="mb-6 flex items-start gap-3 rounded-[10px] border border-border p-4">
+      <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
       <div className="flex-1">
-        <p className="font-medium text-foreground">{t("welcome.title")}</p>
-        <p className="mt-1 text-sm text-muted-foreground">{t("welcome.message")}</p>
+        <p className="text-sm font-medium text-foreground">{t("welcome.title")}</p>
+        <p className="mt-1 text-[13px] text-muted-foreground">{t("welcome.message")}</p>
       </div>
       <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={dismiss}>
-        <X className="h-4 w-4" />
+        <X className="h-3.5 w-3.5" />
       </Button>
     </div>
   );

@@ -35,27 +35,27 @@ const ForgotPasswordPage = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-8">
-      <div className="w-full max-w-md">
-        <Link to="/" className="mb-8 flex items-center gap-2">
-          <BookOpen className="h-7 w-7 text-accent" />
-          <span className="text-xl font-bold text-primary">Quali</span>
+      <div className="w-full max-w-sm">
+        <Link to="/" className="mb-8 inline-flex items-center gap-2">
+          <BookOpen className="h-5 w-5 text-primary" />
+          <span className="text-base font-semibold text-foreground">Quali</span>
         </Link>
 
         {sent ? (
           <div className="text-center">
-            <h1 className="mb-2 text-2xl font-bold text-foreground">{t("auth.checkYourEmail")}</h1>
-            <p className="mb-8 text-muted-foreground">{t("auth.emailResetSent")}</p>
+            <h1 className="mb-2 text-2xl font-semibold text-foreground">{t("auth.checkYourEmail")}</h1>
+            <p className="mb-8 text-sm text-muted-foreground">{t("auth.emailResetSent")}</p>
             <Button variant="outline" asChild>
               <Link to="/login">{t("auth.backToSignIn")}</Link>
             </Button>
           </div>
         ) : (
           <>
-            <h1 className="mb-2 text-2xl font-bold text-foreground">{t("auth.forgotPasswordTitle")}</h1>
-            <p className="mb-8 text-muted-foreground">{t("auth.enterEmailReset")}</p>
+            <h1 className="mb-1 text-2xl font-semibold text-foreground">{t("auth.forgotPasswordTitle")}</h1>
+            <p className="mb-8 text-sm text-muted-foreground">{t("auth.enterEmailReset")}</p>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="email">{t("auth.email")}</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="email" className="text-[13px] font-medium">{t("auth.email")}</Label>
                 <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
@@ -63,7 +63,7 @@ const ForgotPasswordPage = () => {
                 {t("auth.sendResetLink")}
               </Button>
             </form>
-            <p className="mt-6 text-center text-sm text-muted-foreground">
+            <p className="mt-6 text-center text-[13px] text-muted-foreground">
               <Link to="/login" className="font-medium text-primary hover:underline">{t("auth.backToSignIn")}</Link>
             </p>
           </>

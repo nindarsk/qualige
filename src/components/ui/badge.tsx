@@ -4,14 +4,17 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center rounded px-2 py-0.5 text-xs font-medium transition-colors border",
   {
     variants: {
       variant: {
-        default: "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
-        secondary: "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        destructive: "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
-        outline: "text-foreground",
+        default: "border-[hsl(var(--status-success-border))] bg-[hsl(var(--status-success-bg))] text-[hsl(var(--status-success))]",
+        secondary: "border-border bg-secondary text-muted-foreground",
+        destructive: "border-[hsl(var(--status-error-border))] bg-[hsl(var(--status-error-bg))] text-destructive",
+        outline: "border-border bg-background text-foreground",
+        warning: "border-[hsl(var(--status-warning-border))] bg-[hsl(var(--status-warning-bg))] text-[hsl(var(--status-warning))]",
+        info: "border-[hsl(var(--status-info-border))] bg-[hsl(var(--status-info-bg))] text-[hsl(var(--status-info))]",
+        purple: "border-[hsl(var(--status-purple-border))] bg-[hsl(var(--status-purple-bg))] text-[hsl(var(--status-purple))]",
       },
     },
     defaultVariants: {

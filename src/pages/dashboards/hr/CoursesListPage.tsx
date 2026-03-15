@@ -157,13 +157,13 @@ const CoursesListPage = () => {
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{course.title}</span>
                       {course.generation_method === "ai_prompt" && (
-                        <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-700 text-[10px] px-1.5 py-0">AI Generated</Badge>
+                        <Badge variant="warning" className="text-[10px] px-1.5 py-0">AI Generated</Badge>
                       )}
                       {course.generation_method === "ai_quiz_only" && (
-                        <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-700 text-[10px] px-1.5 py-0">AI Quiz</Badge>
+                        <Badge variant="warning" className="text-[10px] px-1.5 py-0">AI Quiz</Badge>
                       )}
                       {(course.generation_method === "document" || !course.generation_method) && (
-                        <Badge variant="outline" className="border-blue-300 bg-blue-50 text-blue-700 text-[10px] px-1.5 py-0">From Document</Badge>
+                        <Badge variant="info" className="text-[10px] px-1.5 py-0">From Document</Badge>
                       )}
                     </div>
                   </TableCell>

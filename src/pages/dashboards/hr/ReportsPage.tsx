@@ -245,11 +245,11 @@ const ReportsPage = () => {
   const statusBadge = (status: string) => {
     switch (status) {
       case "completed":
-        return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Completed</Badge>;
+        return <Badge variant="default">Completed</Badge>;
       case "in_progress":
-        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">In Progress</Badge>;
+        return <Badge variant="info">In Progress</Badge>;
       default:
-        return <Badge variant="outline" className="border-amber-300 text-amber-600">Assigned</Badge>;
+        return <Badge variant="warning">Assigned</Badge>;
     }
   };
 

@@ -69,25 +69,24 @@ const PricingPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Nav */}
-      <nav className="fixed top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md">
-        <div className="container flex h-16 items-center justify-between">
+      <nav className="fixed top-0 z-50 w-full border-b border-border bg-background">
+        <div className="container flex h-14 items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <BookOpen className="h-7 w-7 text-accent" />
-            <span className="text-xl font-bold text-primary">Quali</span>
+            <BookOpen className="h-5 w-5 text-primary" />
+            <span className="text-base font-semibold text-foreground">Quali</span>
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <LanguageSwitcher />
             {session ? (
-              <Button asChild>
+              <Button size="sm" asChild>
                 <Link to="/hr">{t("nav.dashboard")}</Link>
               </Button>
             ) : (
               <>
-                <Button variant="ghost" asChild>
+                <Button variant="ghost" size="sm" asChild>
                   <Link to="/login">{t("nav.signIn")}</Link>
                 </Button>
-                <Button asChild className="gradient-gold border-0 text-accent-foreground hover:opacity-90">
+                <Button size="sm" asChild>
                   <Link to="/register">{t("nav.getStarted")}</Link>
                 </Button>
               </>
@@ -96,59 +95,56 @@ const PricingPage = () => {
         </div>
       </nav>
 
-      {/* Header */}
       <section className="pt-32 pb-16">
         <div className="container text-center">
-          <h1 className="mb-4 text-4xl font-bold text-foreground md:text-5xl">
+          <h1 className="mb-3 text-3xl font-semibold text-foreground">
             {t("pricing.title")}
           </h1>
-          <p className="mx-auto mb-10 max-w-2xl text-lg text-muted-foreground">
+          <p className="mx-auto mb-10 max-w-lg text-muted-foreground">
             {t("pricing.subtitle")}
           </p>
 
-          {/* Annual toggle */}
           <div className="flex items-center justify-center gap-3 mb-12">
-            <Label htmlFor="billing-toggle" className={cn("text-sm font-medium", !annual && "text-foreground")}>
+            <Label htmlFor="billing-toggle" className={cn("text-sm", !annual && "text-foreground font-medium")}>
               {t("pricing.monthly")}
             </Label>
             <Switch id="billing-toggle" checked={annual} onCheckedChange={setAnnual} />
-            <Label htmlFor="billing-toggle" className={cn("text-sm font-medium", annual && "text-foreground")}>
+            <Label htmlFor="billing-toggle" className={cn("text-sm", annual && "text-foreground font-medium")}>
               {t("pricing.annual")}
             </Label>
             {annual && (
-              <span className="ml-2 rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold text-accent">
+              <span className="ml-2 rounded px-2 py-0.5 text-xs font-medium border border-[hsl(var(--status-success-border))] bg-[hsl(var(--status-success-bg))] text-[hsl(var(--status-success))]">
                 {t("pricing.save20")}
               </span>
             )}
           </div>
 
-          {/* Plan cards */}
-          <div className="grid gap-8 md:grid-cols-3 max-w-5xl mx-auto">
+          <div className="grid gap-6 md:grid-cols-3 max-w-4xl mx-auto">
             {plans.map((plan) => (
               <Card
                 key={plan.name}
                 className={cn(
-                  "relative flex flex-col transition-all hover:shadow-lg",
-                  plan.popular && "border-2 border-accent shadow-lg scale-[1.02]"
+                  "relative flex flex-col",
+                  plan.popular && "border-primary"
                 )}
               >
                 {plan.popular && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full gradient-gold px-4 py-1 text-xs font-bold text-accent-foreground">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded px-3 py-0.5 text-xs font-medium bg-primary text-primary-foreground">
                     {t("pricing.mostPopular")}
                   </div>
                 )}
                 <CardHeader className="text-center pb-2">
-                  <CardTitle className="text-xl text-foreground">{plan.name}</CardTitle>
+                  <CardTitle className="text-lg text-foreground">{plan.name}</CardTitle>
                   <CardDescription>{t("pricing.upToEmployees", { count: plan.maxUsers })}</CardDescription>
                 </CardHeader>
                 <CardContent className="flex-1 text-center">
                   <div className="mb-6">
-                    <span className="text-4xl font-bold text-foreground">
+                    <span className="text-3xl font-semibold text-foreground">
                       ${annual ? Math.round(plan.annualPrice / 12) : plan.monthlyPrice}
                     </span>
-                    <span className="text-muted-foreground">{t("pricing.perMonth")}</span>
+                    <span className="text-muted-foreground text-sm">{t("pricing.perMonth")}</span>
                     {annual && (
-                      <p className="mt-1 text-sm text-muted-foreground">
+                      <p className="mt-1 text-[13px] text-muted-foreground">
                         ${plan.annualPrice.toLocaleString()}{t("pricing.perYear")}
                       </p>
                     )}
@@ -156,7 +152,7 @@ const PricingPage = () => {
                   <ul className="space-y-3 text-left">
                     {plan.featureKeys.map((f) => (
                       <li key={f} className="flex items-start gap-2 text-sm text-foreground">
-                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                         {f}
                       </li>
                     ))}
@@ -164,12 +160,7 @@ const PricingPage = () => {
                 </CardContent>
                 <CardFooter>
                   <Button
-                    className={cn(
-                      "w-full",
-                      plan.popular
-                        ? "gradient-gold border-0 text-accent-foreground hover:opacity-90"
-                        : ""
-                    )}
+                    className="w-full"
                     variant={plan.popular ? "default" : "outline"}
                     onClick={() => setSelectedPlan(plan.name)}
                   >
@@ -183,12 +174,11 @@ const PricingPage = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border py-8 mt-12">
+      <footer className="border-t border-border bg-surface py-8 mt-12">
         <div className="container flex flex-col items-center justify-between gap-4 text-sm text-muted-foreground sm:flex-row">
           <div className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-accent" />
-            <span className="font-semibold text-foreground">Quali</span>
+            <BookOpen className="h-4 w-4 text-primary" />
+            <span className="font-medium text-foreground">Quali</span>
           </div>
           <p>© 2026 Quali. All rights reserved.</p>
         </div>
