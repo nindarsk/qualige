@@ -46,20 +46,20 @@ const ResetPasswordPage = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-8">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-sm">
         <div className="mb-8 flex items-center gap-2">
-          <BookOpen className="h-7 w-7 text-accent" />
-          <span className="text-xl font-bold text-primary">Quali</span>
+          <BookOpen className="h-5 w-5 text-primary" />
+          <span className="text-base font-semibold text-foreground">Quali</span>
         </div>
-        <h1 className="mb-2 text-2xl font-bold text-foreground">{t("auth.resetPassword")}</h1>
-        <p className="mb-8 text-muted-foreground">{t("auth.enterNewPassword")}</p>
+        <h1 className="mb-1 text-2xl font-semibold text-foreground">{t("auth.resetPassword")}</h1>
+        <p className="mb-8 text-sm text-muted-foreground">{t("auth.enterNewPassword")}</p>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="password">{t("auth.newPassword")}</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="password" className="text-[13px] font-medium">{t("auth.newPassword")}</Label>
             <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </div>
-          <div>
-            <Label htmlFor="confirmPassword">{t("auth.confirmNewPassword")}</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="confirmPassword" className="text-[13px] font-medium">{t("auth.confirmNewPassword")}</Label>
             <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
