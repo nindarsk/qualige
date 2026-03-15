@@ -5,78 +5,97 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 216 28% 15%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 216 28% 15%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 216 28% 15%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 217 58% 26%;
-    --primary-foreground: 40 10% 96%;
+    --primary: 220 54% 27%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 214 20% 94%;
-    --secondary-foreground: 217 58% 26%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 214 20% 96%;
-    --muted-foreground: 215 14% 46%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 215 16% 47%;
 
     --accent: 42 52% 54%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 20% 90%;
-    --input: 214 20% 90%;
-    --ring: 217 58% 26%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 220 54% 27%;
 
-    --radius: 0.5rem;
+    --radius: 0.4375rem;
 
-    --sidebar-background: 217 58% 20%;
-    --sidebar-foreground: 210 20% 92%;
-    --sidebar-primary: 42 52% 54%;
+    --surface: 0 0% 98%;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 16% 47%;
+    --sidebar-primary: 220 54% 27%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 50% 28%;
-    --sidebar-accent-foreground: 210 20% 92%;
-    --sidebar-border: 217 50% 30%;
-    --sidebar-ring: 42 52% 54%;
+    --sidebar-accent: 220 54% 95%;
+    --sidebar-accent-foreground: 220 54% 27%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 220 54% 27%;
 
     --gold: 42 52% 54%;
     --gold-foreground: 0 0% 100%;
-    --navy: 217 58% 26%;
-    --navy-light: 217 40% 36%;
-    --navy-dark: 217 65% 18%;
+    --navy: 220 54% 27%;
+    --navy-light: 220 40% 36%;
+    --navy-dark: 220 60% 16%;
+
+    --status-success: 160 84% 39%;
+    --status-success-bg: 138 76% 97%;
+    --status-success-border: 142 72% 82%;
+    --status-warning: 32 95% 44%;
+    --status-warning-bg: 48 96% 89%;
+    --status-warning-border: 48 96% 89%;
+    --status-error: 0 84% 60%;
+    --status-error-bg: 0 86% 97%;
+    --status-error-border: 0 93% 94%;
+    --status-info: 217 91% 60%;
+    --status-info-bg: 214 100% 97%;
+    --status-info-border: 213 93% 87%;
+    --status-purple: 263 70% 50%;
+    --status-purple-bg: 263 87% 97%;
+    --status-purple-border: 263 78% 87%;
   }
 
   .dark {
-    --background: 217 65% 8%;
+    --background: 222 47% 5%;
     --foreground: 210 20% 92%;
-    --card: 217 50% 12%;
+    --card: 222 40% 8%;
     --card-foreground: 210 20% 92%;
-    --popover: 217 50% 12%;
+    --popover: 222 40% 8%;
     --popover-foreground: 210 20% 92%;
     --primary: 42 52% 54%;
-    --primary-foreground: 217 65% 8%;
-    --secondary: 217 32% 17%;
+    --primary-foreground: 222 47% 5%;
+    --secondary: 222 30% 14%;
     --secondary-foreground: 210 20% 92%;
-    --muted: 217 32% 17%;
+    --muted: 222 30% 14%;
     --muted-foreground: 215 20% 65%;
     --accent: 42 52% 54%;
-    --accent-foreground: 217 65% 8%;
+    --accent-foreground: 222 47% 5%;
     --destructive: 0 62% 30%;
     --destructive-foreground: 210 20% 92%;
-    --border: 217 32% 22%;
-    --input: 217 32% 22%;
+    --border: 222 30% 18%;
+    --input: 222 30% 18%;
     --ring: 42 52% 54%;
-    --sidebar-background: 217 65% 6%;
+    --surface: 222 40% 6%;
+    --sidebar-background: 222 47% 4%;
     --sidebar-foreground: 210 20% 92%;
     --sidebar-primary: 42 52% 54%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 50% 14%;
+    --sidebar-accent: 222 40% 12%;
     --sidebar-accent-foreground: 210 20% 92%;
-    --sidebar-border: 217 50% 14%;
+    --sidebar-border: 222 30% 14%;
     --sidebar-ring: 42 52% 54%;
   }
 }
@@ -88,23 +107,28 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  }
-}
-
-@layer utilities {
-  .gradient-navy {
-    background: linear-gradient(135deg, hsl(217 65% 18%) 0%, hsl(217 58% 26%) 50%, hsl(217 40% 36%) 100%);
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: hsl(222 47% 11%);
   }
 
-  .gradient-gold {
-    background: linear-gradient(135deg, hsl(42 52% 54%) 0%, hsl(38 60% 60%) 100%);
+  h1 {
+    @apply text-foreground;
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
   }
 
-  .text-gradient-gold {
-    background: linear-gradient(135deg, hsl(42 52% 54%) 0%, hsl(38 60% 60%) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  h2 {
+    @apply text-foreground;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  h3 {
+    @apply text-foreground;
+    font-size: 15px;
+    font-weight: 500;
   }
 }
