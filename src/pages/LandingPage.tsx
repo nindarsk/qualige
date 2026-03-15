@@ -18,24 +18,16 @@ const LandingPage = () => {
   }
 
   const features = [
-    { icon: Sparkles, title: t("landing.features.aiCourseGen"), description: t("landing.features.aiCourseGenDesc") },
-    {
-      icon: ShieldCheck,
-      title: t("landing.features.complianceTracking"),
-      description: t("landing.features.complianceTrackingDesc"),
-    },
-    {
-      icon: Award,
-      title: t("landing.features.instantCertificates"),
-      description: t("landing.features.instantCertificatesDesc"),
-    },
-  ];
+  { icon: Sparkles, title: t("landing.features.aiCourseGen"), description: t("landing.features.aiCourseGenDesc") },
+  { icon: ShieldCheck, title: t("landing.features.complianceTracking"), description: t("landing.features.complianceTrackingDesc") },
+  { icon: Award, title: t("landing.features.instantCertificates"), description: t("landing.features.instantCertificatesDesc") }];
+
 
   const steps = [
-    { step: "01", title: t("landing.steps.uploadDoc"), description: t("landing.steps.uploadDocDesc") },
-    { step: "02", title: t("landing.steps.aiGenerates"), description: t("landing.steps.aiGeneratesDesc") },
-    { step: "03", title: t("landing.steps.assignTrack"), description: t("landing.steps.assignTrackDesc") },
-  ];
+  { icon: Upload, step: "01", title: t("landing.steps.uploadDoc"), description: t("landing.steps.uploadDocDesc") },
+  { icon: Brain, step: "02", title: t("landing.steps.aiGenerates"), description: t("landing.steps.aiGeneratesDesc") },
+  { icon: Users, step: "03", title: t("landing.steps.assignTrack"), description: t("landing.steps.assignTrackDesc") }];
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -94,22 +86,26 @@ const LandingPage = () => {
       <section id="features" className="py-24">
         <div className="container">
           <div className="mb-16 text-center">
-            <h2 className="mb-3 text-2xl font-semibold text-foreground">{t("landing.everythingYouNeed")}</h2>
-            <p className="mx-auto max-w-lg text-muted-foreground">{t("landing.everythingDesc")}</p>
+            <h2 className="mb-3 text-2xl font-semibold text-foreground">
+              {t("landing.everythingYouNeed")}
+            </h2>
+            <p className="mx-auto max-w-lg text-muted-foreground">
+              {t("landing.everythingDesc")}
+            </p>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
-            {features.map((feature, i) => (
-              <div
-                key={i}
-                className="rounded-[10px] border border-border bg-background p-6 transition-colors duration-150 hover:border-muted-foreground/30"
-              >
+            {features.map((feature, i) =>
+            <div
+              key={i}
+              className="rounded-[10px] border border-border bg-background p-6 transition-colors duration-150 hover:border-muted-foreground/30">
+              
                 <div className="mb-4 inline-flex rounded-lg border border-border p-2.5">
                   <feature.icon className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <h3 className="mb-2 text-[15px] font-medium text-foreground">{feature.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </section>
@@ -122,8 +118,8 @@ const LandingPage = () => {
             <p className="mx-auto max-w-lg text-muted-foreground">{t("landing.howItWorksDesc")}</p>
           </div>
           <div className="grid gap-8 md:grid-cols-3">
-            {steps.map((step, i) => (
-              <div key={step.step} className="relative text-center">
+            {steps.map((step, i) =>
+            <div key={step.step} className="relative text-center">
                 <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-full border border-border text-sm font-semibold text-foreground">
                   {step.step}
                 </div>
@@ -132,13 +128,13 @@ const LandingPage = () => {
                 </div>
                 <h3 className="mb-2 text-[15px] font-medium text-foreground">{step.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
-                {i < steps.length - 1 && (
-                  <div className="absolute right-0 top-6 hidden -translate-x-1/2 md:block">
+                {i < steps.length - 1 &&
+              <div className="absolute right-0 top-6 hidden -translate-x-1/2 md:block">
                     <ArrowRight className="h-4 w-4 text-border" />
                   </div>
-                )}
+              }
               </div>
-            ))}
+            )}
           </div>
         </div>
       </section>
@@ -166,15 +162,13 @@ const LandingPage = () => {
           </div>
           <p className="text-center">{t("landing.builtForGeorgian")}</p>
           <div className="flex items-center gap-4">
-            <Link to="/login" className="hover:text-foreground transition-colors">
-              {t("nav.signIn")}
-            </Link>
+            <Link to="/login" className="hover:text-foreground transition-colors">{t("nav.signIn")}</Link>
             <p>© 2026 Quali. All rights reserved.</p>
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>);
+
 };
 
 export default LandingPage;
