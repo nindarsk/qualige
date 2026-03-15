@@ -18,16 +18,16 @@ const LandingPage = () => {
   }
 
   const features = [
-    { icon: Sparkles, title: t("landing.features.aiCourseGen"), description: t("landing.features.aiCourseGenDesc") },
-    { icon: ShieldCheck, title: t("landing.features.complianceTracking"), description: t("landing.features.complianceTrackingDesc") },
-    { icon: Award, title: t("landing.features.instantCertificates"), description: t("landing.features.instantCertificatesDesc") },
-  ];
+  { icon: Sparkles, title: t("landing.features.aiCourseGen"), description: t("landing.features.aiCourseGenDesc") },
+  { icon: ShieldCheck, title: t("landing.features.complianceTracking"), description: t("landing.features.complianceTrackingDesc") },
+  { icon: Award, title: t("landing.features.instantCertificates"), description: t("landing.features.instantCertificatesDesc") }];
+
 
   const steps = [
-    { icon: Upload, step: "01", title: t("landing.steps.uploadDoc"), description: t("landing.steps.uploadDocDesc") },
-    { icon: Brain, step: "02", title: t("landing.steps.aiGenerates"), description: t("landing.steps.aiGeneratesDesc") },
-    { icon: Users, step: "03", title: t("landing.steps.assignTrack"), description: t("landing.steps.assignTrackDesc") },
-  ];
+  { icon: Upload, step: "01", title: t("landing.steps.uploadDoc"), description: t("landing.steps.uploadDocDesc") },
+  { icon: Brain, step: "02", title: t("landing.steps.aiGenerates"), description: t("landing.steps.aiGeneratesDesc") },
+  { icon: Users, step: "03", title: t("landing.steps.assignTrack"), description: t("landing.steps.assignTrackDesc") }];
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -61,7 +61,7 @@ const LandingPage = () => {
               <Sparkles className="h-3.5 w-3.5 text-accent" />
               {t("landing.aiPoweredPlatform")}
             </div>
-            <h1 className="mb-6 text-[48px] font-bold leading-[1.1] tracking-[-0.03em] text-foreground">
+            <h1 className="mb-6 font-bold leading-[1.1] tracking-[-0.03em] text-foreground text-3xl">
               {t("landing.heroTitle")}
             </h1>
             <p className="mb-8 text-xl leading-relaxed text-muted-foreground max-w-[560px] mx-auto">
@@ -94,18 +94,18 @@ const LandingPage = () => {
             </p>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
-            {features.map((feature, i) => (
-              <div
-                key={i}
-                className="rounded-[10px] border border-border bg-background p-6 transition-colors duration-150 hover:border-muted-foreground/30"
-              >
+            {features.map((feature, i) =>
+            <div
+              key={i}
+              className="rounded-[10px] border border-border bg-background p-6 transition-colors duration-150 hover:border-muted-foreground/30">
+              
                 <div className="mb-4 inline-flex rounded-lg border border-border p-2.5">
                   <feature.icon className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <h3 className="mb-2 text-[15px] font-medium text-foreground">{feature.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </section>
@@ -118,8 +118,8 @@ const LandingPage = () => {
             <p className="mx-auto max-w-lg text-muted-foreground">{t("landing.howItWorksDesc")}</p>
           </div>
           <div className="grid gap-8 md:grid-cols-3">
-            {steps.map((step, i) => (
-              <div key={step.step} className="relative text-center">
+            {steps.map((step, i) =>
+            <div key={step.step} className="relative text-center">
                 <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-full border border-border text-sm font-semibold text-foreground">
                   {step.step}
                 </div>
@@ -128,13 +128,13 @@ const LandingPage = () => {
                 </div>
                 <h3 className="mb-2 text-[15px] font-medium text-foreground">{step.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
-                {i < steps.length - 1 && (
-                  <div className="absolute right-0 top-6 hidden -translate-x-1/2 md:block">
+                {i < steps.length - 1 &&
+              <div className="absolute right-0 top-6 hidden -translate-x-1/2 md:block">
                     <ArrowRight className="h-4 w-4 text-border" />
                   </div>
-                )}
+              }
               </div>
-            ))}
+            )}
           </div>
         </div>
       </section>
@@ -167,8 +167,8 @@ const LandingPage = () => {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>);
+
 };
 
 export default LandingPage;
