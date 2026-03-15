@@ -14,7 +14,7 @@ const navItems = [
 ];
 
 const SuperAdminDashboard = () => {
-  const { fullName, signOut } = useAuth();
+  const { fullName, signOut, user } = useAuth();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -24,29 +24,28 @@ const SuperAdminDashboard = () => {
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col gradient-navy transition-transform duration-300 lg:static lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 flex w-60 flex-col border-r border-border bg-background transition-transform duration-300 lg:static lg:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex h-16 items-center justify-between px-6">
+        <div className="flex h-14 items-center px-6">
           <Link to="/admin" className="flex items-center gap-2">
-            <BookOpen className="h-6 w-6 text-accent" />
-            <span className="text-lg font-bold text-sidebar-foreground">Quali</span>
+            <BookOpen className="h-5 w-5 text-primary" />
+            <span className="text-base font-semibold text-foreground">Quali</span>
           </Link>
-          <Button variant="ghost" size="icon" className="text-sidebar-foreground lg:hidden" onClick={() => setSidebarOpen(false)}>
-            <X className="h-5 w-5" />
+          <Button variant="ghost" size="icon" className="ml-auto text-muted-foreground lg:hidden" onClick={() => setSidebarOpen(false)}>
+            <X className="h-4 w-4" />
           </Button>
         </div>
 
-        <div className="mx-3 mb-4 flex items-center gap-2 rounded-lg bg-sidebar-accent/50 px-3 py-2">
-          <Shield className="h-4 w-4 text-accent" />
-          <span className="text-xs font-semibold text-accent">Super Admin</span>
+        <div className="mx-3 mb-3 flex items-center gap-2 rounded-lg border border-border px-3 py-1.5">
+          <Shield className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-xs font-medium text-muted-foreground">Super Admin</span>
         </div>
 
-        <nav className="flex-1 space-y-1 px-3">
+        <nav className="flex-1 space-y-0.5 px-3">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
@@ -55,25 +54,34 @@ const SuperAdminDashboard = () => {
                 to={item.path}
                 onClick={() => setSidebarOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors duration-150",
                   isActive
-                    ? "bg-sidebar-accent text-sidebar-primary"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                    : "text-muted-foreground hover:bg-surface hover:text-foreground"
                 )}
               >
-                <item.icon className="h-5 w-5" />
+                <item.icon className="h-4 w-4" />
                 {item.title}
               </Link>
             );
           })}
         </nav>
 
-        <div className="border-t border-sidebar-border p-3">
+        <div className="border-t border-border p-3">
+          <div className="flex items-center gap-3 px-3 py-2 mb-1">
+            <Avatar className="h-7 w-7">
+              <AvatarFallback className="bg-primary text-[10px] text-primary-foreground">{initials}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">{fullName}</p>
+              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+            </div>
+          </div>
           <button
             onClick={signOut}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
           >
-            <LogOut className="h-5 w-5" />
+            <LogOut className="h-4 w-4" />
             Sign Out
           </button>
         </div>
@@ -84,24 +92,22 @@ const SuperAdminDashboard = () => {
       )}
 
       <div className="flex flex-1 flex-col">
-        <header className="flex h-16 items-center justify-between border-b border-border bg-card px-6">
+        <header className="flex h-14 items-center justify-between border-b border-border bg-background px-6">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(true)}>
-              <Menu className="h-5 w-5" />
+              <Menu className="h-4 w-4" />
             </Button>
-            <h2 className="text-sm font-semibold text-foreground">Quali Admin</h2>
+            <span className="text-sm text-muted-foreground">Quali Admin</span>
           </div>
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
-            <span className="hidden text-sm text-muted-foreground sm:block">{fullName}</span>
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-primary text-xs text-primary-foreground">{initials}</AvatarFallback>
-            </Avatar>
           </div>
         </header>
 
-        <main className="flex-1 p-6">
-          <Outlet />
+        <main className="flex-1 p-8">
+          <div className="mx-auto max-w-[1200px]">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

@@ -27,14 +27,14 @@ const EmployeeDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="container flex h-16 items-center justify-between">
+      <header className="border-b border-border bg-background">
+        <div className="container flex h-14 items-center justify-between">
           <div className="flex items-center gap-6">
             <Link to="/employee" className="flex items-center gap-2">
-              <BookOpen className="h-6 w-6 text-accent" />
-              <span className="text-lg font-bold text-primary">Quali</span>
+              <BookOpen className="h-5 w-5 text-primary" />
+              <span className="text-base font-semibold text-foreground">Quali</span>
             </Link>
-            <nav className="hidden items-center gap-1 md:flex">
+            <nav className="hidden items-center gap-0.5 md:flex">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.path;
                 return (
@@ -42,8 +42,8 @@ const EmployeeDashboard = () => {
                     key={item.path}
                     to={item.path}
                     className={cn(
-                      "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                      isActive ? "bg-secondary text-primary" : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors duration-150",
+                      isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "text-muted-foreground hover:bg-surface hover:text-foreground"
                     )}
                   >
                     <item.icon className="h-4 w-4" />
@@ -57,14 +57,14 @@ const EmployeeDashboard = () => {
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
             <span className="hidden text-sm text-muted-foreground sm:block">{fullName}</span>
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-primary text-xs text-primary-foreground">{initials}</AvatarFallback>
+            <Avatar className="h-7 w-7">
+              <AvatarFallback className="bg-primary text-[10px] text-primary-foreground">{initials}</AvatarFallback>
             </Avatar>
             <Button variant="ghost" size="icon" className="text-muted-foreground" onClick={signOut}>
               <LogOut className="h-4 w-4" />
             </Button>
             <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMenuOpen(!menuOpen)}>
-              {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </Button>
           </div>
         </div>
@@ -79,8 +79,8 @@ const EmployeeDashboard = () => {
                   to={item.path}
                   onClick={() => setMenuOpen(false)}
                   className={cn(
-                    "flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium",
-                    isActive ? "bg-secondary text-primary" : "text-muted-foreground"
+                    "flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm",
+                    isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "text-muted-foreground"
                   )}
                 >
                   <item.icon className="h-4 w-4" />

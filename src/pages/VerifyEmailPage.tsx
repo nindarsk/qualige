@@ -10,14 +10,14 @@ const VerifyEmailPage = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-8">
-      <div className="w-full max-w-md text-center">
+      <div className="w-full max-w-sm text-center">
         <div className="mb-6 flex justify-center">
-          <div className="rounded-full bg-accent/10 p-4">
-            <Mail className="h-10 w-10 text-accent" />
+          <div className="rounded-full border border-border p-3">
+            <Mail className="h-8 w-8 text-muted-foreground" />
           </div>
         </div>
-        <h1 className="mb-2 text-2xl font-bold text-foreground">{t("auth.checkYourEmail")}</h1>
-        <p className="mb-8 text-muted-foreground">{t("auth.verifyEmailSent")}</p>
+        <h1 className="mb-2 text-2xl font-semibold text-foreground">{t("auth.checkYourEmail")}</h1>
+        <p className="mb-8 text-sm text-muted-foreground">{t("auth.verifyEmailSent")}</p>
         <Button variant="outline" asChild>
           <Link to="/login">{t("auth.backToSignIn")}</Link>
         </Button>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Users, BookOpen, Award, BarChart3, Trophy } from "lucide-react";
@@ -118,33 +118,31 @@ const HRDashboardIndex = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   const statCards = [
-    { title: t("dashboard.totalEmployees"), value: stats.totalEmployees, icon: Users, color: "text-primary" },
-    { title: t("dashboard.coursesPublished"), value: stats.coursesPublished, icon: BookOpen, color: "text-accent" },
-    { title: t("dashboard.completions"), value: stats.completionsThisMonth, icon: Award, color: "text-primary" },
-    { title: t("dashboard.avgQuizScore"), value: `${stats.avgQuizScore}%`, icon: BarChart3, color: "text-accent" },
+    { title: t("dashboard.totalEmployees"), value: stats.totalEmployees, icon: Users },
+    { title: t("dashboard.coursesPublished"), value: stats.coursesPublished, icon: BookOpen },
+    { title: t("dashboard.completions"), value: stats.completionsThisMonth, icon: Award },
+    { title: t("dashboard.avgQuizScore"), value: `${stats.avgQuizScore}%`, icon: BarChart3 },
   ];
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-foreground">{t("dashboard.title")}</h1>
+      <h1 className="text-2xl font-semibold text-foreground">{t("dashboard.title")}</h1>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((s) => (
           <Card key={s.title}>
-            <CardContent className="flex items-center gap-4 p-6">
-              <div className={`flex h-12 w-12 items-center justify-center rounded-lg bg-muted ${s.color}`}>
-                <s.icon className="h-6 w-6" />
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-3">
+                <s.icon className="h-5 w-5 text-muted-foreground" />
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{s.title}</p>
-                <p className="text-2xl font-bold text-foreground">{s.value}</p>
-              </div>
+              <p className="text-[28px] font-semibold text-foreground">{s.value}</p>
+              <p className="text-[13px] text-muted-foreground mt-1">{s.title}</p>
             </CardContent>
           </Card>
         ))}
@@ -152,10 +150,10 @@ const HRDashboardIndex = () => {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-base">{t("dashboard.recentActivity")}</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
+          <div className="p-6 pb-0">
+            <h3 className="text-[15px] font-medium text-foreground">{t("dashboard.recentActivity")}</h3>
+          </div>
+          <CardContent className="p-0 mt-4">
             {activities.length === 0 ? (
               <p className="p-6 text-center text-sm text-muted-foreground">{t("dashboard.noActivityYet")}</p>
             ) : (
@@ -188,12 +186,12 @@ const HRDashboardIndex = () => {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Trophy className="h-4 w-4 text-accent" /> {t("dashboard.leaderboard")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+          <div className="p-6 pb-0">
+            <h3 className="flex items-center gap-2 text-[15px] font-medium text-foreground">
+              <Trophy className="h-4 w-4 text-muted-foreground" /> {t("dashboard.leaderboard")}
+            </h3>
+          </div>
+          <CardContent className="pt-4">
             {leaders.length === 0 ? (
               <p className="text-center text-sm text-muted-foreground">{t("dashboard.noCompletionsYet")}</p>
             ) : (
@@ -201,10 +199,10 @@ const HRDashboardIndex = () => {
                 {leaders.map((l, idx) => (
                   <div key={l.name} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-bold text-foreground">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full border border-border text-xs font-medium text-foreground">
                         {idx + 1}
                       </span>
-                      <span className="text-sm font-medium text-foreground">{l.name}</span>
+                      <span className="text-sm text-foreground">{l.name}</span>
                     </div>
                     <Badge variant="outline">{l.completed} {t("dashboard.courses")}</Badge>
                   </div>

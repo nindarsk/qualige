@@ -24,7 +24,7 @@ const SlideNavigation = ({
   return (
     <div className="flex items-center justify-between gap-4 px-2">
       <Button
-        variant="outline"
+        variant="ghost"
         size="sm"
         onClick={onPrev}
         disabled={currentSlide === 0}
@@ -34,7 +34,6 @@ const SlideNavigation = ({
         {t("learn.prevSlide")}
       </Button>
 
-      {/* Slide dots */}
       <div className="flex items-center gap-1.5">
         {Array.from({ length: totalSlides }).map((_, i) => (
           <span
@@ -43,7 +42,7 @@ const SlideNavigation = ({
               "h-2 w-2 rounded-full transition-all duration-200",
               i === currentSlide
                 ? "bg-primary scale-125"
-                : "bg-muted-foreground/30"
+                : "bg-border"
             )}
           />
         ))}
@@ -53,8 +52,7 @@ const SlideNavigation = ({
         <Button
           size="sm"
           onClick={onCompleteModule}
-          className="min-w-[100px] animate-pulse-once"
-          style={{ backgroundColor: "hsl(var(--accent))", color: "hsl(var(--accent-foreground))" }}
+          className="min-w-[100px]"
         >
           {t("learn.completeModule")}
         </Button>
