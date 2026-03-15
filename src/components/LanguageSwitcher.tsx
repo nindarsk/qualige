@@ -13,7 +13,6 @@ import { Globe } from "lucide-react";
 const languages = [
   { code: "en", label: "English", flag: "🇬🇧" },
   { code: "ka", label: "ქართული", flag: "🇬🇪" },
-  { code: "ru", label: "Русский", flag: "🇷🇺" },
 ];
 
 interface LanguageSwitcherProps {
@@ -45,7 +44,9 @@ const LanguageSwitcher = ({ variant = "ghost", className }: LanguageSwitcherProp
       <DropdownMenuTrigger asChild>
         <Button variant={variant} size="sm" className={className}>
           <Globe className="mr-1.5 h-4 w-4" />
-          <span className="hidden sm:inline">{currentLang.flag} {currentLang.label}</span>
+          <span className="hidden sm:inline">
+            {currentLang.flag} {currentLang.label}
+          </span>
           <span className="sm:hidden">{currentLang.flag}</span>
         </Button>
       </DropdownMenuTrigger>
