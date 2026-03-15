@@ -140,7 +140,7 @@
   "landing": {
     "aiPoweredPlatform": "AI-Powered Learning Platform",
     "heroTitle": "Turn Any Document Into a Training Course in Minutes",
-    "heroSubtitle": "AI-powered Learning Management System built for financial institutions in Georgia. Simplify compliance training, accelerate onboarding, and certify your workforce.",
+    "heroSubtitle": "AI-powered Learning Management System. Simplify onboarding and training process, accelerate onboarding, and certify your workforce.",
     "requestDemo": "Request a Demo",
     "learnMore": "Learn More",
     "startFreeTrial": "Start Free Trial",
@@ -149,12 +149,12 @@
     "howItWorks": "How It Works",
     "howItWorksDesc": "Three simple steps to transform your compliance training.",
     "readyToTransform": "Ready to Transform Your Training?",
-    "readyToTransformDesc": "Join forward-thinking financial institutions already using Quali to streamline compliance and employee development.",
-    "builtForGeorgian": "Built for Georgian financial institutions",
+    "readyToTransformDesc": "Join forward-thinking companies already using Quali to streamline compliance and employee development.",
+    "builtForGeorgian": " ",
     "footerCopyright": "© 2025 Quali.ge. All rights reserved.",
     "features": {
       "aiCourseGen": "AI Course Generation",
-      "aiCourseGenDesc": "Upload any PDF, Word, or PowerPoint and get a complete course with quiz in under 2 minutes.",
+      "aiCourseGenDesc": "Upload any PDF, Word, or PowerPoint or Ask AI and get a complete course with quiz in under 2 minutes.",
       "complianceTracking": "Compliance Tracking",
       "complianceTrackingDesc": "Full audit trail of every course completion, quiz score, and certificate for regulatory reporting.",
       "instantCertificates": "Instant Certificates",
@@ -162,7 +162,7 @@
     },
     "steps": {
       "uploadDoc": "Upload Your Document",
-      "uploadDocDesc": "Upload any policy, manual, or regulation document in PDF, Word, or PowerPoint format.",
+      "uploadDocDesc": "Upload any policy, manual, or regulation document in PDF, Word, or PowerPoint format or prompt AI.",
       "aiGenerates": "AI Generates Your Course",
       "aiGeneratesDesc": "Our AI analyzes the content and creates a structured training course with interactive quiz questions.",
       "assignTrack": "Assign & Track Completion",
