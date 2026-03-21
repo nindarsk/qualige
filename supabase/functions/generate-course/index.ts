@@ -304,10 +304,14 @@ Generate a comprehensive course following this exact JSON structure:
       "question": "string",
       "options": ["A. string", "B. string", "C. string", "D. string"],
       "correct_answer": "A or B or C or D",
-      "explanation": "string explaining why this answer is correct"
+      "explanation": "string explaining why this answer is correct",
+      "scenario": "string or null",
+      "regulation_reference": "string or null"
     }
   ]
-}`;
+}
+
+IMPORTANT: You MUST return the full JSON including the "quiz" array with exactly ${quizCount || 10} questions. The quiz array must NOT be empty. Each question must have: question_number, question, options (array of 4 strings starting with A. B. C. D.), correct_answer (single letter A B C or D), and explanation.`;
 
       let content: string;
       try {
