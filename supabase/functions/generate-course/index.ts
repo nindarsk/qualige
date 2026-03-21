@@ -366,18 +366,24 @@ IMPORTANT: You MUST return the full JSON including the "quiz" array with exactly
         if (modError) console.error("Module insert error:", modError);
       }
 
-      if (courseData.quiz?.length) {
-        const questions = courseData.quiz
+      // Save quiz questions — try both "quiz" and "questions" field names
+      const quizArray = courseData.quiz || courseData.questions || [];
+      if (quizArray.length > 0) {
+        const questions = quizArray
           .filter((q: any) => q.question && q.options && q.correct_answer)
           .map((q: any, i: number) => ({
             course_id: course.id, question_number: q.question_number ?? (i + 1),
             question: q.question, options: q.options, correct_answer: q.correct_answer,
-            explanation: q.explanation || "", question_type: "multiple_choice",
+            explanation: q.explanation || "", question_type: q.question_type || "multiple_choice",
+            scenario: q.scenario || null, regulation_reference: q.regulation_reference || null,
           }));
         if (questions.length > 0) {
           const { error: quizError } = await supabaseAdmin.from("quiz_questions").insert(questions);
           if (quizError) console.error("Quiz insert error:", quizError);
+          else console.log(`Saved ${questions.length} quiz questions for course ${course.id}`);
         }
+      } else {
+        console.warn(`No quiz questions found in AI response for course ${course.id}`);
       }
 
       return new Response(JSON.stringify({ courseId: course.id }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
