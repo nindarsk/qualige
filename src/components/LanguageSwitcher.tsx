@@ -7,12 +7,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Globe } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 const languages = [
-  { code: "en", label: "English", flag: "🇬🇧" },
-  { code: "ka", label: "ქართული", flag: "🇬🇪" },
+  { code: "en", label: "English", short: "EN" },
+  { code: "ka", label: "ქართული", short: "KA" },
+  { code: "ru", label: "Русский", short: "RU" },
 ];
 
 interface LanguageSwitcherProps {
@@ -20,7 +20,7 @@ interface LanguageSwitcherProps {
   className?: string;
 }
 
-const LanguageSwitcher = ({ variant = "ghost", className }: LanguageSwitcherProps) => {
+const LanguageSwitcher = ({ className }: LanguageSwitcherProps) => {
   const { i18n } = useTranslation();
   const { user } = useAuth();
 
@@ -30,7 +30,6 @@ const LanguageSwitcher = ({ variant = "ghost", className }: LanguageSwitcherProp
     i18n.changeLanguage(code);
     localStorage.setItem("quali_language", code);
 
-    // Save to profile if authenticated
     if (user) {
       await supabase
         .from("profiles")
@@ -42,13 +41,12 @@ const LanguageSwitcher = ({ variant = "ghost", className }: LanguageSwitcherProp
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant={variant} size="sm" className={className}>
-          <Globe className="mr-1.5 h-4 w-4" />
-          <span className="hidden sm:inline">
-            {currentLang.flag} {currentLang.label}
-          </span>
-          <span className="sm:hidden">{currentLang.flag}</span>
-        </Button>
+        <button
+          className={`inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors h-8 ${className || ""}`}
+        >
+          {currentLang.short}
+          <ChevronDown className="h-3 w-3" />
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {languages.map((lang) => (
@@ -57,7 +55,6 @@ const LanguageSwitcher = ({ variant = "ghost", className }: LanguageSwitcherProp
             onClick={() => switchLanguage(lang.code)}
             className={i18n.language === lang.code ? "bg-accent/10 font-semibold" : ""}
           >
-            <span className="mr-2">{lang.flag}</span>
             {lang.label}
           </DropdownMenuItem>
         ))}
