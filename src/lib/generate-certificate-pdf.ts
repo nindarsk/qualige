@@ -69,9 +69,92 @@ const certText: Record<string, {
   },
 };
 
-function buildPdf(data: CertificateData): jsPDF {
+// Cache the loaded font to avoid re-fetching
+let cachedFontBase64: string | null = null;
+
+async function loadNotoSansFont(): Promise<string> {
+  if (cachedFontBase64) return cachedFontBase64;
+  
+  // Noto Sans supports Latin, Georgian, Cyrillic
+  const fontUrl = "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notosansgeorgian/NotoSansGeorgian%5Bwdth%2Cwght%5D.ttf";
+  
+  const response = await fetch(fontUrl);
+  const buffer = await response.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  cachedFontBase64 = btoa(binary);
+  return cachedFontBase64;
+}
+
+// Also load Noto Sans for Latin+Cyrillic (regular weight)
+let cachedNotoSansBase64: string | null = null;
+
+async function loadNotoSansRegularFont(): Promise<string> {
+  if (cachedNotoSansBase64) return cachedNotoSansBase64;
+
+  const fontUrl = "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notosans/NotoSans%5Bital%2Cwdth%2Cwght%5D.ttf";
+
+  const response = await fetch(fontUrl);
+  const buffer = await response.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  cachedNotoSansBase64 = btoa(binary);
+  return cachedNotoSansBase64;
+}
+
+async function registerFonts(doc: jsPDF, language: string): Promise<void> {
+  if (language === "Georgian") {
+    const fontData = await loadNotoSansFont();
+    doc.addFileToVFS("NotoSansGeorgian.ttf", fontData);
+    doc.addFont("NotoSansGeorgian.ttf", "NotoSansGeorgian", "normal");
+    doc.addFont("NotoSansGeorgian.ttf", "NotoSansGeorgian", "bold");
+  }
+  
+  if (language === "Russian" || language === "Georgian") {
+    const fontData = await loadNotoSansRegularFont();
+    doc.addFileToVFS("NotoSans.ttf", fontData);
+    doc.addFont("NotoSans.ttf", "NotoSans", "normal");
+    doc.addFont("NotoSans.ttf", "NotoSans", "bold");
+  }
+}
+
+function getFontName(language: string, text: string): string {
+  // Check if text contains Georgian characters
+  const hasGeorgian = /[\u10A0-\u10FF\u2D00-\u2D2F\u1C90-\u1CBF]/.test(text);
+  if (hasGeorgian) return "NotoSansGeorgian";
+  
+  if (language === "Russian") return "NotoSans";
+  if (language === "Georgian") return "NotoSans"; // fallback for Latin text in Georgian certificates
+  
+  return "helvetica";
+}
+
+function setFont(doc: jsPDF, language: string, style: "normal" | "bold", text: string) {
+  const fontName = getFontName(language, text);
+  // Variable fonts registered as both normal and bold use same file, 
+  // but jsPDF may not render bold differently — use "normal" style for variable fonts
+  if (fontName === "helvetica") {
+    doc.setFont(fontName, style);
+  } else {
+    doc.setFont(fontName, "normal");
+  }
+}
+
+async function buildPdf(data: CertificateData): Promise<jsPDF> {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const lang = certText[data.language] || certText.English;
+  const language = data.language;
+
+  // Register fonts for non-Latin scripts
+  await registerFonts(doc, language);
 
   // Background
   doc.setFillColor(27, 58, 107);
@@ -87,18 +170,18 @@ function buildPdf(data: CertificateData): jsPDF {
   // Header
   doc.setTextColor(27, 58, 107);
   doc.setFontSize(32);
-  doc.setFont("helvetica", "bold");
+  setFont(doc, language, "bold", lang.title);
   doc.text(lang.title, 148.5, 50, { align: "center" });
 
   // Subtitle
   doc.setFontSize(14);
-  doc.setFont("helvetica", "normal");
+  setFont(doc, language, "normal", lang.subtitle);
   doc.setTextColor(100, 100, 100);
   doc.text(lang.subtitle, 148.5, 70, { align: "center" });
 
   // Employee name
   doc.setFontSize(28);
-  doc.setFont("helvetica", "bold");
+  setFont(doc, language, "bold", data.employeeName);
   doc.setTextColor(27, 58, 107);
   doc.text(data.employeeName, 148.5, 90, { align: "center" });
 
@@ -109,34 +192,46 @@ function buildPdf(data: CertificateData): jsPDF {
 
   // Course completion text
   doc.setFontSize(13);
-  doc.setFont("helvetica", "normal");
+  setFont(doc, language, "normal", lang.completedText);
   doc.setTextColor(100, 100, 100);
   doc.text(lang.completedText, 148.5, 110, { align: "center" });
 
   // Course title
   doc.setFontSize(18);
-  doc.setFont("helvetica", "bold");
+  setFont(doc, language, "bold", data.courseTitle);
   doc.setTextColor(27, 58, 107);
   doc.text(data.courseTitle, 148.5, 125, { align: "center" });
 
   // Organization
   doc.setFontSize(12);
-  doc.setFont("helvetica", "normal");
+  const issuedText = `${lang.issuedBy}: ${data.organizationName}`;
+  setFont(doc, language, "normal", issuedText);
   doc.setTextColor(100, 100, 100);
-  doc.text(`${lang.issuedBy}: ${data.organizationName}`, 148.5, 142, { align: "center" });
+  doc.text(issuedText, 148.5, 142, { align: "center" });
 
   // Date and Certificate ID
   doc.setFontSize(10);
-  doc.text(`${lang.date}: ${data.completionDate}`, 50, 165);
-  doc.text(`${lang.certId}: ${data.certificateId}`, 50, 172);
+  const dateText = `${lang.date}: ${data.completionDate}`;
+  setFont(doc, language, "normal", dateText);
+  doc.text(dateText, 50, 165);
+  
+  const certIdText = `${lang.certId}: ${data.certificateId}`;
+  setFont(doc, language, "normal", certIdText);
+  doc.text(certIdText, 50, 172);
 
   // Score & authorized
-  doc.text(`${lang.score}: ${Math.round(data.score)}%`, 200, 165);
-  doc.text(`${lang.authorizedBy}: ${data.hrAdminName}`, 200, 172);
+  const scoreText = `${lang.score}: ${Math.round(data.score)}%`;
+  setFont(doc, language, "normal", scoreText);
+  doc.text(scoreText, 200, 165);
+  
+  const authText = `${lang.authorizedBy}: ${data.hrAdminName}`;
+  setFont(doc, language, "normal", authText);
+  doc.text(authText, 200, 172);
 
   // Footer
   doc.setFontSize(9);
   doc.setTextColor(150, 150, 150);
+  setFont(doc, language, "normal", lang.footer);
   doc.text(lang.footer, 148.5, 195, { align: "center" });
 
   return doc;
@@ -188,7 +283,7 @@ export async function generateAndUploadCertificate(
       { year: "numeric", month: "long", day: "numeric" }
     );
 
-    const doc = buildPdf({
+    const doc = await buildPdf({
       employeeName: emp.full_name,
       courseTitle: courseRes.data?.title || "Course",
       organizationName: orgRes.data?.name || "Organization",
